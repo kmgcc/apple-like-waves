@@ -1,0 +1,24 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": false,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "baseUrl": ".",
+    "paths": {
+      "@capsule-wave/core": ["../web/packages/core/src/index.ts", "../web/packages/core/src", "./src/fallback-core.ts"],
+      "@capsule-wave/canvas": ["../web/packages/canvas/src/index.ts", "../web/packages/canvas/src", "./src/fallback-canvas.ts"]
+    }
+  },
+  "include": ["src"]
+}

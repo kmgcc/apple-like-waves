@@ -1,0 +1,23 @@
+{
+  "name": "@capsule-wave/core",
+  "version": "1.0.0",
+  "description": "Zero-dependency pure DSP core for CapsuleWave audio spectrum analysis",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc"
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "license": "MIT"
+}
