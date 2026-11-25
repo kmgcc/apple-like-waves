@@ -10,10 +10,8 @@ import {
 } from "@alwave/canvas";
 
 // --- 状态定义 ---
-type VisualizerMode = "tuned" | "raw" | "compare";
 type AudioSourceType = "preset" | "file" | "mic";
 
-let currentMode: VisualizerMode = "tuned";
 let currentSource: AudioSourceType = "preset";
 let bandCount = 6;
 let autoWidth = false;
@@ -33,7 +31,6 @@ let audioBridge: WebAudioBridge | null = null;
 let mediaElementSource: MediaElementAudioSourceNode | null = null;
 let micStream: MediaStream | null = null;
 let micSourceNode: MediaStreamAudioSourceNode | null = null;
-let rawFreqData: Uint8Array<ArrayBuffer> | null = null;
 
 // 核心分析器与渲染器
 let analyzer: SpectrumAnalyzer | null = null;
@@ -45,15 +42,9 @@ const demoTrackUrl = `${import.meta.env.BASE_URL}demo-track.m4a`;
 // DOM 元素引用
 const audioElement = document.getElementById("audio-element") as HTMLAudioElement;
 const canvasTuned = document.getElementById("canvas-tuned") as HTMLCanvasElement;
-const canvasRaw = document.getElementById("canvas-raw") as HTMLCanvasElement;
-const panelTuned = document.getElementById("panel-tuned") as HTMLElement;
-const panelRaw = document.getElementById("panel-raw") as HTMLElement;
 const visualizerWrapper = document.getElementById("visualizer-wrapper") as HTMLElement;
 
-// 顶部栏与状态 HUD
-const modeTunedBtn = document.getElementById("mode-tuned") as HTMLButtonElement;
-const modeRawBtn = document.getElementById("mode-raw") as HTMLButtonElement;
-const modeCompareBtn = document.getElementById("mode-compare") as HTMLButtonElement;
+// 顶部状态 HUD
 const statusDot = document.getElementById("status-dot") as HTMLElement;
 const statusText = document.getElementById("status-text") as HTMLElement;
 const hudBands = document.getElementById("hud-bands") as HTMLElement;
@@ -82,7 +73,6 @@ const filePlayerRow = document.getElementById("file-player-row") as HTMLElement;
 const filePlayPauseBtn = document.getElementById("file-play-pause-btn") as HTMLButtonElement;
 const fileChangeBtn = document.getElementById("file-change-btn") as HTMLButtonElement;
 const localFileTitle = document.getElementById("local-file-title") as HTMLElement;
-const localFileDesc = document.getElementById("local-file-desc") as HTMLElement;
 const fileProgressContainer = document.getElementById("file-progress-container") as HTMLElement;
 const fileCurrentTime = document.getElementById("file-current-time") as HTMLElement;
 const fileTotalTime = document.getElementById("file-total-time") as HTMLElement;
@@ -123,12 +113,12 @@ function formatTime(seconds: number): string {
 function updateCapsuleProportions(canvasWidth?: number, canvasHeight?: number) {
   if (!rendererTuned) return;
   const w = canvasWidth || canvasTuned.clientWidth || 400;
-  const h = canvasHeight || canvasTuned.clientHeight || 136;
-  const maxClusterW = Math.min(w * 0.72, bandCount * 14);
+  const h = canvasHeight || canvasTuned.clientHeight || 180;
+  const maxClusterW = Math.min(w * 0.76, bandCount * 18);
   const pitch = maxClusterW / bandCount;
-  rendererTuned.capsuleWidth = Math.max(2.5, Math.min(7.5, pitch * 0.54));
-  rendererTuned.capsuleSpacing = Math.max(2.0, Math.min(6.5, pitch * 0.46));
-  rendererTuned.maxHeightRatio = Math.min(0.55, 72 / Math.max(1, h));
+  rendererTuned.capsuleWidth = Math.max(3.0, Math.min(9.5, pitch * 0.54));
+  rendererTuned.capsuleSpacing = Math.max(2.0, Math.min(8.0, pitch * 0.46));
+  rendererTuned.maxHeightRatio = Math.min(0.64, 112 / Math.max(1, h));
 }
 
 function ensureAudioPipeline(): WebAudioBridge {
@@ -153,7 +143,6 @@ function ensureAudioPipeline(): WebAudioBridge {
 
   if (!audioBridge) {
     audioBridge = new WebAudioBridge({ audioContext: audioCtx, fftSize: 2048 });
-    rawFreqData = new Uint8Array(new ArrayBuffer(audioBridge.analyserNode.frequencyBinCount));
   }
 
   if (!mediaElementSource && audioElement) {
@@ -180,7 +169,7 @@ function initAnalyzerAndRenderer() {
     noiseGateScale,
   });
 
-  const h = canvasTuned.clientHeight || 136;
+  const h = canvasTuned.clientHeight || 180;
   rendererTuned = new AlwaveCanvasRenderer(canvasTuned, {
     bandCount,
     color: capsuleColor,
@@ -188,7 +177,7 @@ function initAnalyzerAndRenderer() {
     springDamping,
     pauseDuration,
     pauseDamping,
-    maxHeightRatio: Math.min(0.55, 72 / Math.max(1, h)),
+    maxHeightRatio: Math.min(0.64, 112 / Math.max(1, h)),
   });
 
   const w = canvasTuned.clientWidth || 400;
@@ -200,40 +189,19 @@ function initAnalyzerAndRenderer() {
 }
 
 function updateVisualizerLayout() {
-  if (currentMode === "tuned") {
-    panelTuned.style.display = "flex";
-    panelRaw.style.display = "none";
-  } else if (currentMode === "raw") {
-    panelTuned.style.display = "none";
-    panelRaw.style.display = "flex";
-  } else {
-    panelTuned.style.display = "flex";
-    panelRaw.style.display = "flex";
-  }
-
   if (rendererTuned) {
     rendererTuned.resize();
     updateCapsuleProportions(canvasTuned.clientWidth || 400);
   }
-  resizeRawCanvas();
 
   if (autoWidth) {
     applyAutoWidth();
   }
 }
 
-function resizeRawCanvas() {
-  const dpr = window.devicePixelRatio || 1;
-  const w = canvasRaw.clientWidth || 300;
-  const h = canvasRaw.clientHeight || 136;
-  canvasRaw.width = Math.round(w * dpr);
-  canvasRaw.height = Math.round(h * dpr);
-}
-
 function applyAutoWidth() {
   const containerWidth = visualizerWrapper.clientWidth;
-  const targetWidth = currentMode === "compare" ? containerWidth * 0.5 : containerWidth;
-  const recommended = recommendedBandCount(targetWidth);
+  const recommended = recommendedBandCount(containerWidth);
   const clamped = Math.min(36, Math.max(6, recommended));
 
   if (clamped !== bandCount) {
@@ -348,47 +316,6 @@ let lastTimestamp = performance.now();
 let frameCount = 0;
 let lastFpsUpdate = performance.now();
 
-function renderRawFFT(ctx: CanvasRenderingContext2D, width: number, height: number, dpr: number) {
-  if (!audioBridge || !rawFreqData) return;
-
-  audioBridge.analyserNode.getByteFrequencyData(rawFreqData);
-
-  ctx.save();
-  ctx.scale(dpr, dpr);
-  ctx.clearRect(0, 0, width, height);
-
-  const numBars = bandCount;
-  const maxClusterW = Math.min(width * 0.72, numBars * 14);
-  const pitch = maxClusterW / numBars;
-  const barWidth = Math.max(2.5, Math.min(7.5, pitch * 0.54));
-  const barSpacing = Math.max(2.0, Math.min(6.5, pitch * 0.46));
-  const totalW = numBars * barWidth + (numBars - 1) * barSpacing;
-  const startX = (width - totalW) * 0.5;
-
-  const binStep = Math.floor(rawFreqData.length / (numBars * 2));
-  const maxH = Math.min(height * 0.55, 72);
-
-  for (let i = 0; i < numBars; i++) {
-    const binIdx = Math.min(rawFreqData.length - 1, i * binStep + 1);
-    const rawVal = rawFreqData[binIdx] / 255.0;
-    const barHeight = Math.max(barWidth, rawVal * maxH);
-    const x = startX + i * (barWidth + barSpacing);
-    const y = (height - barHeight) * 0.5;
-
-    ctx.fillStyle = currentMode === "compare" ? "rgba(239, 68, 68, 0.85)" : capsuleColor;
-    const r = barWidth * 0.5;
-    ctx.beginPath();
-    if (typeof ctx.roundRect === "function") {
-      ctx.roundRect(x, y, barWidth, barHeight, r);
-    } else {
-      ctx.rect(x, y, barWidth, barHeight);
-    }
-    ctx.fill();
-  }
-
-  ctx.restore();
-}
-
 function animationLoop(timestamp: number) {
   requestAnimationFrame(animationLoop);
 
@@ -412,37 +339,11 @@ function animationLoop(timestamp: number) {
     const tunedTargets = analyzer.step(dt);
     rendererTuned.render(tunedTargets, dt, active);
   }
-
-  if (currentMode !== "tuned") {
-    const ctxRaw = canvasRaw.getContext("2d");
-    if (ctxRaw) {
-      const dpr = window.devicePixelRatio || 1;
-      const w = canvasRaw.clientWidth || 300;
-      const h = canvasRaw.clientHeight || 136;
-      renderRawFFT(ctxRaw, w, h, dpr);
-    }
-  }
 }
 
 // --- 事件监听配置 ---
 
 function setupEventListeners() {
-  // 模式切换
-  const modeButtons = [
-    { btn: modeTunedBtn, mode: "tuned" as VisualizerMode },
-    { btn: modeRawBtn, mode: "raw" as VisualizerMode },
-    { btn: modeCompareBtn, mode: "compare" as VisualizerMode },
-  ];
-
-  modeButtons.forEach(({ btn, mode }) => {
-    btn.addEventListener("click", () => {
-      modeButtons.forEach((b) => b.btn.classList.remove("active"));
-      btn.classList.add("active");
-      currentMode = mode;
-      updateVisualizerLayout();
-    });
-  });
-
   // 音频源切换
   const tabs = [
     { btn: tabPreset, view: viewPreset, type: "preset" as AudioSourceType },
@@ -560,7 +461,6 @@ function setupEventListeners() {
     localFileUrl = URL.createObjectURL(file);
     audioElement.src = localFileUrl;
     localFileTitle.textContent = file.name;
-    localFileDesc.textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB · 本地音频`;
     filePlayerRow.style.display = "flex";
     if (fileProgressContainer) {
       fileProgressContainer.style.display = "flex";
@@ -715,7 +615,6 @@ function setupEventListeners() {
       rendererTuned.resize();
       updateCapsuleProportions(canvasTuned.clientWidth || 400);
     }
-    resizeRawCanvas();
     if (autoWidth) {
       applyAutoWidth();
     }

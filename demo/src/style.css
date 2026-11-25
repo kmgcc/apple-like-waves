@@ -133,37 +133,9 @@ body {
 .stage-topbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   flex-wrap: wrap;
   gap: 10px;
-}
-
-.mode-switcher {
-  display: inline-flex;
-  background-color: var(--bg-tertiary);
-  padding: 3px;
-  border-radius: var(--radius-md);
-  gap: 2px;
-}
-
-.mode-btn {
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 12px;
-  font-weight: 500;
-  padding: 5px 12px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  transition: color 0.15s ease, background-color 0.15s ease;
-}
-
-.mode-btn:hover {
-  color: var(--text-primary);
-}
-
-.mode-btn.active {
-  background-color: var(--bg-secondary);
-  color: var(--text-primary);
 }
 
 .stage-metrics {
@@ -197,10 +169,9 @@ body {
 
 /* Visualizer Panes */
 .visualizer-wrapper {
-  min-height: 136px;
+  min-height: 180px;
   width: 100%;
   display: flex;
-  gap: 12px;
 }
 
 .canvas-panel {
@@ -213,32 +184,11 @@ body {
   flex-direction: column;
 }
 
-.canvas-header {
-  padding: 8px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background-color: var(--bg-tertiary);
-}
-
-.canvas-title {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.03em;
-  color: var(--text-secondary);
-}
-
-.canvas-subtitle {
-  font-size: 11px;
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-}
-
 .canvas-body {
   flex: 1;
   position: relative;
   width: 100%;
-  height: 136px;
+  height: 180px;
 }
 
 .spectrum-canvas {

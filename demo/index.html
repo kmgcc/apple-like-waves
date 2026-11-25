@@ -28,11 +28,6 @@
         <!-- 频谱视窗卡片 -->
         <section class="stage-card">
           <div class="stage-topbar">
-            <div class="mode-switcher" role="tablist">
-              <button id="mode-tuned" class="mode-btn active" role="tab">胶囊频谱</button>
-              <button id="mode-raw" class="mode-btn" role="tab">原始 FFT</button>
-              <button id="mode-compare" class="mode-btn" role="tab">对比模式</button>
-            </div>
             <div class="stage-metrics">
               <div class="metric-pill">
                 <span id="status-dot" class="status-dot"></span>
@@ -52,25 +47,9 @@
 
           <!-- 频谱画布区域 -->
           <div class="visualizer-wrapper" id="visualizer-wrapper">
-            <!-- alwave 调校胶囊频谱 -->
             <div class="canvas-panel" id="panel-tuned">
-              <div class="canvas-header">
-                <span class="canvas-title">alwave 调校频谱</span>
-                <span class="canvas-subtitle">八度分箱 · 瞬态起音 · 二阶弹簧</span>
-              </div>
               <div class="canvas-body">
                 <canvas id="canvas-tuned" class="spectrum-canvas"></canvas>
-              </div>
-            </div>
-
-            <!-- 原始 FFT 频谱 -->
-            <div class="canvas-panel" id="panel-raw" style="display: none;">
-              <div class="canvas-header">
-                <span class="canvas-title">原始线性 FFT</span>
-                <span class="canvas-subtitle">线性频点 · 未校准</span>
-              </div>
-              <div class="canvas-body">
-                <canvas id="canvas-raw" class="spectrum-canvas"></canvas>
               </div>
             </div>
           </div>
@@ -91,7 +70,6 @@
                 <button id="play-pause-btn" class="play-pause-btn" title="播放 / 暂停 (空格键)">播放</button>
                 <div class="track-meta">
                   <div class="track-title" id="track-title">AURORA — The Sun (片段)</div>
-                  <div class="track-desc" id="track-desc">128 kbps AAC · 104.6 秒</div>
                 </div>
               </div>
               <div class="progress-container">
@@ -114,7 +92,6 @@
                 <button id="file-play-pause-btn" class="play-pause-btn">播放</button>
                 <div class="track-meta">
                   <div class="track-title" id="local-file-title">未载入文件</div>
-                  <div class="track-desc" id="local-file-desc">本地音频</div>
                 </div>
                 <button id="file-change-btn" class="btn-secondary">更换文件</button>
               </div>
@@ -132,7 +109,6 @@
               <div class="mic-view">
                 <div class="mic-info">
                   <div class="mic-info-title">实时麦克风采集</div>
-                  <div class="mic-info-desc">时域直采（已静音扬声器防啸叫）</div>
                 </div>
                 <button id="mic-toggle-btn" class="btn-primary">开启麦克风</button>
               </div>
