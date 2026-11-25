@@ -1,12 +1,12 @@
-# CapsuleWave Algorithm Specification
+# apple-like-waves (alwave) Algorithm Specification
 
-This document details the mathematical models, digital signal processing (DSP) pipeline, and physics simulation underpinning CapsuleWave.
+This document details the mathematical models, digital signal processing (DSP) pipeline, and physics simulation underpinning apple-like-waves (alwave).
 
 ---
 
 ## 1. Architecture Overview
 
-CapsuleWave transforms real-time mono pulse-code modulation (PCM) audio into smooth, responsive, organic capsule bars:
+apple-like-waves (alwave) transforms real-time mono pulse-code modulation (PCM) audio into smooth, responsive, organic capsule bars:
 
 ```
 Audio PCM (48 kHz)

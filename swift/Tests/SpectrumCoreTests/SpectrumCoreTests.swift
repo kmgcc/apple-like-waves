@@ -160,7 +160,7 @@ final class SpectrumCoreTests: XCTestCase {
             .deletingLastPathComponent() // SpectrumCoreTests
             .deletingLastPathComponent() // Tests
             .deletingLastPathComponent() // swift
-            .deletingLastPathComponent() // capsule-wave
+            .deletingLastPathComponent() // apple-like-waves
 
         let outputDir = repoRoot.appendingPathComponent("spec/golden-vectors")
         try? FileManager.default.createDirectory(at: outputDir, withIntermediateDirectories: true)

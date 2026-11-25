@@ -89,3 +89,6 @@ public struct CapsuleSpectrumView: View {
         }
     }
 }
+
+/// Backward compatibility and standard naming alias for CapsuleSpectrumView.
+public typealias AlwaveSpectrumView = CapsuleSpectrumView

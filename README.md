@@ -1,21 +1,14 @@
-# CapsuleWave
+# apple-like-waves (alwave)
 
 > An organic, physically-modeled capsule audio spectrum visualizer across Swift (macOS / iOS) and Web (TypeScript / Canvas).
 
 ---
 
-## Visual Preview & Interactive Demo
+## Visual Comparison & Interactive Demo
 
-<!-- TODO: side-by-side comparison GIF / curve plot -->
-```
-┌────────────────────────────────────────────────────────┐
-│  [TODO: side-by-side comparison GIF / curve plot]      │
-│  - Raw FFT vs CapsuleWave Tuned Spectrum               │
-│  - Step response and transient punch dynamics          │
-└────────────────────────────────────────────────────────┘
-```
+![Apple vs alwave Comparison](docs/assets/comparison.gif)
 
-- **Live Web Demo**: [TODO: Live Web Demo Link (e.g. GitHub Pages or local demo runner)]
+- **Live Web Demo**: [https://kmgcc.github.io/apple-like-waves/](https://kmgcc.github.io/apple-like-waves/)
 
 ---
 
@@ -32,12 +25,23 @@
 
 ### Swift (Swift Package Manager)
 
-Add CapsuleWave to your `Package.swift`:
+Add `apple-like-waves` to your `Package.swift`:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/CapsuleWave/capsule-wave.git", from: "1.0.0")
+    .package(url: "https://github.com/kmgcc/apple-like-waves.git", from: "1.0.0")
 ]
+```
+
+Add the product to your target:
+
+```swift
+.target(
+    name: "YourApp",
+    dependencies: [
+        .product(name: "Alwave", package: "apple-like-waves")
+    ]
+)
 ```
 
 Minimal audio processing pipeline:
@@ -60,7 +64,7 @@ let follower = CapsuleSpringFollower(count: 6)
 let barHeights = follower.step(targets: normalizedEnergies.map(Double.init), dt: 1.0 / 60.0)
 
 // Or render directly in SwiftUI:
-CapsuleSpectrumView(values: normalizedEnergies)
+AlwaveSpectrumView(values: normalizedEnergies)
 ```
 
 Adaptive band calculation:
@@ -75,14 +79,14 @@ let recommendedBands = SpectrumAnalyzer.recommendedBandCount(width: view.bounds.
 Install the packages:
 
 ```bash
-npm install @capsule-wave/core @capsule-wave/canvas
+npm install @alwave/core @alwave/canvas
 ```
 
 Basic usage with Web Audio API:
 
 ```typescript
-import { createSpectrumAnalyzer, recommendedBandCount } from "@capsule-wave/core";
-import { CapsuleWaveCanvasRenderer } from "@capsule-wave/canvas";
+import { createSpectrumAnalyzer, recommendedBandCount } from "@alwave/core";
+import { AlwaveCanvasRenderer } from "@alwave/canvas";
 
 // Create analyzer instance
 const analyzer = createSpectrumAnalyzer({
@@ -98,7 +102,7 @@ analyzer.pushSamples(buffer);
 
 // Render loop
 const canvas = document.getElementById("visualizer") as HTMLCanvasElement;
-const renderer = new CapsuleWaveCanvasRenderer(canvas, { bandCount: 6 });
+const renderer = new AlwaveCanvasRenderer(canvas, { bandCount: 6 });
 
 function render(timestamp: number) {
   const dt = 1 / 60;

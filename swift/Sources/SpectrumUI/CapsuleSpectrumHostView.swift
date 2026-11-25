@@ -205,4 +205,7 @@ public final class CapsuleSpectrumHostView: NSView {
         }
     }
 }
+
+/// Backward compatibility and standard naming alias for CapsuleSpectrumHostView.
+public typealias AlwaveSpectrumHostView = CapsuleSpectrumHostView
 #endif

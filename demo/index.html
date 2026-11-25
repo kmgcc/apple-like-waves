@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CapsuleWave — Tuned Spectrum Visualizer Demo</title>
+    <title>alwave — apple-like-waves spectrum demo</title>
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
@@ -11,27 +11,12 @@
     <header class="app-header">
       <div class="header-inner">
         <div class="brand">
-          <div class="brand-icon">CW</div>
-          <span class="brand-title">CapsuleWave</span>
+          <span class="brand-title">alwave</span>
+          <span class="brand-subtitle">apple-like-waves</span>
           <span class="brand-tag">v1.0.0</span>
         </div>
         <div class="header-actions">
-          <button id="theme-toggle-btn" class="btn-icon" title="Toggle theme (Light / Dark)" aria-label="Toggle theme">
-            <svg id="theme-icon-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display: none;">
-              <circle cx="12" cy="12" r="5"></circle>
-              <line x1="12" y1="1" x2="12" y2="3"></line>
-              <line x1="12" y1="21" x2="12" y2="23"></line>
-              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-              <line x1="1" y1="12" x2="3" y2="12"></line>
-              <line x1="21" y1="12" x2="23" y2="12"></line>
-              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-            </svg>
-            <svg id="theme-icon-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-            </svg>
-          </button>
+          <button id="theme-toggle-btn" class="btn-secondary" aria-label="Toggle theme">Light</button>
         </div>
       </div>
     </header>
@@ -68,8 +53,8 @@
           <!-- Tuned Capsule Spectrum Canvas -->
           <div class="canvas-panel" id="panel-tuned">
             <div class="canvas-header">
-              <span class="canvas-title">CapsuleWave Tuned Spectrum</span>
-              <span class="canvas-subtitle">Octave Binned · Attack Boosted · Spring Dynamics</span>
+              <span class="canvas-title">alwave Spectrum</span>
+              <span class="canvas-subtitle">Octave Bins · Attack Boost · Spring Dynamics</span>
             </div>
             <div class="canvas-body">
               <canvas id="canvas-tuned" class="spectrum-canvas"></canvas>
@@ -79,8 +64,8 @@
           <!-- Raw FFT Spectrum Canvas -->
           <div class="canvas-panel" id="panel-raw" style="display: none;">
             <div class="canvas-header">
-              <span class="canvas-title">Standard Raw FFT</span>
-              <span class="canvas-subtitle">Linear Bins · Uncalibrated Amplitude</span>
+              <span class="canvas-title">Raw FFT</span>
+              <span class="canvas-subtitle">Linear Bins · Uncalibrated</span>
             </div>
             <div class="canvas-body">
               <canvas id="canvas-raw" class="spectrum-canvas"></canvas>
@@ -101,18 +86,10 @@
           <!-- Preset Track View -->
           <div id="view-preset" class="track-player">
             <div class="player-main-row">
-              <button id="play-pause-btn" class="play-pause-btn" title="Play / Pause (Space)">
-                <svg id="icon-play" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                </svg>
-                <svg id="icon-pause" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
-                  <rect x="6" y="4" width="4" height="16"></rect>
-                  <rect x="14" y="4" width="4" height="16"></rect>
-                </svg>
-              </button>
+              <button id="play-pause-btn" class="play-pause-btn" title="Play / Pause (Space)">Play</button>
               <div class="track-meta">
                 <div class="track-title" id="track-title">AURORA — The Sun (Preview)</div>
-                <div class="track-desc" id="track-desc">128 kbps AAC · First Half Cut (104.6s)</div>
+                <div class="track-desc" id="track-desc">128 kbps AAC · 104.6s excerpt</div>
               </div>
             </div>
             <div class="progress-container">
@@ -127,25 +104,24 @@
           <!-- Local File Dropzone View -->
           <div id="view-file" class="track-player" style="display: none;">
             <div id="dropzone" class="dropzone">
-              <div class="dropzone-title">Drag & drop your audio file here</div>
-              <div class="dropzone-hint">Supports MP3, M4A, WAV, FLAC, AAC, OGG</div>
+              <div class="dropzone-title">Drag & drop audio file here, or click to choose</div>
+              <div class="dropzone-hint">MP3, M4A, WAV, FLAC, AAC, OGG</div>
               <input type="file" id="file-input" accept="audio/*" style="display: none;" />
-              <button id="browse-btn" class="btn-secondary" style="margin-top: 12px;">Browse File</button>
             </div>
-            <div id="file-player-row" class="player-main-row" style="display: none; margin-top: 10px;">
-              <button id="file-play-pause-btn" class="play-pause-btn">
-                <svg id="file-icon-play" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                  <polygon points="5 3 19 12 5 21 5 3"></polygon>
-                </svg>
-                <svg id="file-icon-pause" width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
-                  <rect x="6" y="4" width="4" height="16"></rect>
-                  <rect x="14" y="4" width="4" height="16"></rect>
-                </svg>
-              </button>
+            <div id="file-player-row" class="player-main-row" style="display: none; margin-top: 6px;">
+              <button id="file-play-pause-btn" class="play-pause-btn">Play</button>
               <div class="track-meta">
                 <div class="track-title" id="local-file-title">No file loaded</div>
-                <div class="track-desc" id="local-file-desc">Drop or select an audio file</div>
+                <div class="track-desc" id="local-file-desc">Local audio file</div>
               </div>
+              <button id="file-change-btn" class="btn-secondary" style="font-size: 12px; padding: 5px 10px;">Change File</button>
+            </div>
+            <div id="file-progress-container" class="progress-container" style="display: none;">
+              <span id="file-current-time" class="time-label">0:00</span>
+              <div id="file-progress-bar-wrapper" class="progress-bar-wrapper">
+                <div id="file-progress-bar-fill" class="progress-bar-fill"></div>
+              </div>
+              <span id="file-total-time" class="time-label">0:00</span>
             </div>
           </div>
 
@@ -153,18 +129,10 @@
           <div id="view-mic" style="display: none;">
             <div class="mic-view">
               <div class="mic-info">
-                <div class="mic-info-title">Real-Time Audio Input</div>
-                <div class="mic-info-desc">Captures live microphone stream (Speaker feedback loop muted).</div>
+                <div class="mic-info-title">Live Microphone</div>
+                <div class="mic-info-desc">Acoustic feedback muted (no speaker loopback)</div>
               </div>
-              <button id="mic-toggle-btn" class="btn-primary">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                  <line x1="12" y1="19" x2="12" y2="23"></line>
-                  <line x1="8" y1="23" x2="16" y2="23"></line>
-                </svg>
-                <span>Enable Microphone</span>
-              </button>
+              <button id="mic-toggle-btn" class="btn-primary">Enable Mic</button>
             </div>
           </div>
         </div>
@@ -182,7 +150,7 @@
             </div>
             <div class="slider-wrapper">
               <input type="range" id="slider-bands" min="6" max="36" step="1" value="6" />
-              <button id="btn-auto-width" class="btn-secondary" title="Automatically compute band count based on canvas width">
+              <button id="btn-auto-width" class="btn-secondary" title="Auto compute band count from container width">
                 Auto
               </button>
             </div>
@@ -192,14 +160,14 @@
           <div class="control-group">
             <div class="control-label-row">
               <span class="control-label">Pause Test</span>
-              <span class="control-value">Smooth Collapse</span>
+              <span class="control-value">Critically Damped</span>
             </div>
             <div style="display: flex; gap: 8px;">
               <button id="btn-test-collapse" class="btn-secondary" style="flex: 1;">
-                Simulate Pause Collapse
+                Simulate Pause
               </button>
               <button id="btn-reset-knobs" class="btn-secondary" title="Reset all tuning knobs to defaults">
-                Reset Defaults
+                Reset
               </button>
             </div>
           </div>
@@ -207,16 +175,8 @@
 
         <!-- Collapsible Tuning Knobs Accordion -->
         <div class="accordion-header" id="accordion-toggle">
-          <div class="accordion-title">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="3"></circle>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-            </svg>
-            <span>DSP & Physics Tuning Parameters</span>
-          </div>
-          <svg class="accordion-arrow" id="accordion-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="6 9 12 15 18 9"></polyline>
-          </svg>
+          <span class="accordion-title">DSP & Physics Parameters</span>
+          <span class="accordion-status" id="accordion-status">[+]</span>
         </div>
 
         <div class="accordion-body" id="accordion-body">
@@ -263,10 +223,10 @@
                 <span class="control-label">Capsule Palette</span>
               </div>
               <div class="color-palette">
-                <div class="color-swatch active" data-color="#ffffff" style="background-color: #ffffff;" title="Monochrome"></div>
-                <div class="color-swatch" data-color="#38bdf8" style="background-color: #38bdf8;" title="Sky Cyan"></div>
+                <div class="color-swatch active" data-color="#e6c450" style="background-color: #e6c450;" title="Cover Sun Gold"></div>
+                <div class="color-swatch" data-color="#ffffff" style="background-color: #ffffff;" title="Monochrome"></div>
+                <div class="color-swatch" data-color="#38bdf8" style="background-color: #38bdf8;" title="Sky"></div>
                 <div class="color-swatch" data-color="#34d399" style="background-color: #34d399;" title="Emerald"></div>
-                <div class="color-swatch" data-color="#fbbf24" style="background-color: #fbbf24;" title="Amber"></div>
                 <div class="color-swatch" data-color="#a78bfa" style="background-color: #a78bfa;" title="Violet"></div>
               </div>
             </div>
@@ -278,17 +238,16 @@
     <!-- Footer -->
     <footer class="app-footer">
       <div class="footer-inner">
-        <span>CapsuleWave — Cross-Platform Calibrated Audio Spectrum</span>
+        <span>apple-like-waves (alwave) — Calibrated Audio Spectrum</span>
         <div class="footer-links">
-          <a href="https://github.com" target="_blank" rel="noopener noreferrer" class="footer-link">GitHub</a>
-          <span style="opacity: 0.3;">·</span>
+          <a href="https://github.com/kmgcc/apple-like-waves" target="_blank" rel="noopener noreferrer" class="footer-link">GitHub</a>
           <span>MIT License 2026</span>
         </div>
       </div>
     </footer>
 
-    <!-- Hidden native audio element -->
-    <audio id="audio-element" src="/demo-track.m4a" preload="auto" crossorigin="anonymous"></audio>
+    <!-- Native audio element -->
+    <audio id="audio-element" preload="auto" crossorigin="anonymous"></audio>
 
     <script type="module" src="/src/main.ts"></script>
   </body>

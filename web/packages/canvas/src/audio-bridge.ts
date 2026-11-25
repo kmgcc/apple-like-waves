@@ -7,7 +7,7 @@ export interface AudioBridgeOptions {
  * Web Audio API bridge for extracting real-time time-domain PCM samples.
  *
  * NOTE: Strictly uses AnalyserNode.getFloatTimeDomainData() rather than getFloatFrequencyData()
- * because CapsuleWave performs its own calibrated Radix-2 Real FFT, Hann windowing,
+ * because alwave performs its own calibrated Radix-2 Real FFT, Hann windowing,
  * dynamic octave binning, and nonlinear compression.
  */
 export class WebAudioBridge {
@@ -29,7 +29,7 @@ export class WebAudioBridge {
     this.audioContext = AudioCtx;
     this.analyserNode = this.audioContext.createAnalyser();
     this.analyserNode.fftSize = options.fftSize ?? 2048;
-    this.analyserNode.smoothingTimeConstant = 0.0; // Raw audio passed directly to CapsuleWave
+    this.analyserNode.smoothingTimeConstant = 0.0; // Raw audio passed directly to alwave
 
     this.pcmBuffer = new Float32Array(this.analyserNode.fftSize);
   }

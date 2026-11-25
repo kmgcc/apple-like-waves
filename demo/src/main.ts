@@ -3,11 +3,11 @@ import {
   DEFAULT_TUNING_PROFILE,
   recommendedBandCount,
   SpectrumAnalyzer,
-} from "@capsule-wave/core";
+} from "@alwave/core";
 import {
-  CapsuleWaveCanvasRenderer,
+  AlwaveCanvasRenderer,
   WebAudioBridge,
-} from "@capsule-wave/canvas";
+} from "@alwave/canvas";
 
 // --- State Variables ---
 type VisualizerMode = "tuned" | "raw" | "compare";
@@ -23,8 +23,9 @@ let springDuration = 0.325;
 let springDamping = 0.83;
 let pauseDuration = 0.6;
 let pauseDamping = 1.0;
-let capsuleColor = "#ffffff";
+let capsuleColor = "#e6c450"; // AURORA - The Sun cover gold-yellow
 let isSimulatingPause = false;
+let localFileUrl: string | null = null;
 
 // Audio Pipeline References
 let audioCtx: AudioContext | null = null;
@@ -32,11 +33,14 @@ let audioBridge: WebAudioBridge | null = null;
 let mediaElementSource: MediaElementAudioSourceNode | null = null;
 let micStream: MediaStream | null = null;
 let micSourceNode: MediaStreamAudioSourceNode | null = null;
-let rawFreqData: Uint8Array | null = null;
+let rawFreqData: Uint8Array<ArrayBuffer> | null = null;
 
 // Core Analyzer & Canvas Renderers
 let analyzer: SpectrumAnalyzer | null = null;
-let rendererTuned: CapsuleWaveCanvasRenderer | null = null;
+let rendererTuned: AlwaveCanvasRenderer | null = null;
+
+// Base URL for assets
+const demoTrackUrl = `${import.meta.env.BASE_URL}demo-track.m4a`;
 
 // DOM Elements
 const audioElement = document.getElementById("audio-element") as HTMLAudioElement;
@@ -66,8 +70,6 @@ const viewMic = document.getElementById("view-mic") as HTMLElement;
 
 // Preset Player Elements
 const playPauseBtn = document.getElementById("play-pause-btn") as HTMLButtonElement;
-const iconPlay = document.getElementById("icon-play") as HTMLElement;
-const iconPause = document.getElementById("icon-pause") as HTMLElement;
 const currentTimeLabel = document.getElementById("current-time") as HTMLElement;
 const totalTimeLabel = document.getElementById("total-time") as HTMLElement;
 const progressBarWrapper = document.getElementById("progress-bar-wrapper") as HTMLElement;
@@ -76,13 +78,16 @@ const progressBarFill = document.getElementById("progress-bar-fill") as HTMLElem
 // File Upload Elements
 const dropzone = document.getElementById("dropzone") as HTMLElement;
 const fileInput = document.getElementById("file-input") as HTMLInputElement;
-const browseBtn = document.getElementById("browse-btn") as HTMLButtonElement;
 const filePlayerRow = document.getElementById("file-player-row") as HTMLElement;
 const filePlayPauseBtn = document.getElementById("file-play-pause-btn") as HTMLButtonElement;
-const fileIconPlay = document.getElementById("file-icon-play") as HTMLElement;
-const fileIconPause = document.getElementById("file-icon-pause") as HTMLElement;
+const fileChangeBtn = document.getElementById("file-change-btn") as HTMLButtonElement;
 const localFileTitle = document.getElementById("local-file-title") as HTMLElement;
 const localFileDesc = document.getElementById("local-file-desc") as HTMLElement;
+const fileProgressContainer = document.getElementById("file-progress-container") as HTMLElement;
+const fileCurrentTime = document.getElementById("file-current-time") as HTMLElement;
+const fileTotalTime = document.getElementById("file-total-time") as HTMLElement;
+const fileProgressBarWrapper = document.getElementById("file-progress-bar-wrapper") as HTMLElement;
+const fileProgressBarFill = document.getElementById("file-progress-bar-fill") as HTMLElement;
 
 // Microphone Elements
 const micToggleBtn = document.getElementById("mic-toggle-btn") as HTMLButtonElement;
@@ -96,7 +101,7 @@ const btnResetKnobs = document.getElementById("btn-reset-knobs") as HTMLButtonEl
 
 // Accordion & Sliders
 const accordionToggle = document.getElementById("accordion-toggle") as HTMLElement;
-const accordionArrow = document.getElementById("accordion-arrow") as HTMLElement;
+const accordionStatus = document.getElementById("accordion-status") as HTMLElement;
 const accordionBody = document.getElementById("accordion-body") as HTMLElement;
 const sliderReactivity = document.getElementById("slider-reactivity") as HTMLInputElement;
 const reactivityVal = document.getElementById("reactivity-val") as HTMLElement;
@@ -110,8 +115,6 @@ const colorSwatches = document.querySelectorAll(".color-swatch");
 
 // Theme Toggle
 const themeToggleBtn = document.getElementById("theme-toggle-btn") as HTMLButtonElement;
-const themeIconSun = document.getElementById("theme-icon-sun") as HTMLElement;
-const themeIconMoon = document.getElementById("theme-icon-moon") as HTMLElement;
 
 // --- Helper Functions ---
 
@@ -133,7 +136,7 @@ function ensureAudioPipeline(): WebAudioBridge {
 
   if (!audioBridge) {
     audioBridge = new WebAudioBridge({ audioContext: audioCtx, fftSize: 2048 });
-    rawFreqData = new Uint8Array(audioBridge.analyserNode.frequencyBinCount);
+    rawFreqData = new Uint8Array(new ArrayBuffer(audioBridge.analyserNode.frequencyBinCount));
   }
 
   if (!mediaElementSource && audioElement) {
@@ -160,7 +163,7 @@ function initAnalyzerAndRenderer() {
     noiseGateScale,
   });
 
-  rendererTuned = new CapsuleWaveCanvasRenderer(canvasTuned, {
+  rendererTuned = new AlwaveCanvasRenderer(canvasTuned, {
     bandCount,
     color: capsuleColor,
     springDuration,
@@ -182,7 +185,6 @@ function updateVisualizerLayout() {
     panelTuned.style.display = "none";
     panelRaw.style.display = "flex";
   } else {
-    // Compare (side by side)
     panelTuned.style.display = "flex";
     panelRaw.style.display = "flex";
   }
@@ -243,17 +245,13 @@ function isAudioActive(): boolean {
 
 function updatePlaybackUI(playing: boolean) {
   if (playing) {
-    iconPlay.style.display = "none";
-    iconPause.style.display = "block";
-    fileIconPlay.style.display = "none";
-    fileIconPause.style.display = "block";
+    playPauseBtn.textContent = "Pause";
+    filePlayPauseBtn.textContent = "Pause";
     statusDot.classList.add("active");
     statusText.textContent = currentSource === "mic" ? "Mic Active" : "Playing";
   } else {
-    iconPlay.style.display = "block";
-    iconPause.style.display = "none";
-    fileIconPlay.style.display = "block";
-    fileIconPause.style.display = "none";
+    playPauseBtn.textContent = "Play";
+    filePlayPauseBtn.textContent = "Play";
     statusDot.classList.remove("active");
     statusText.textContent = "Idle";
   }
@@ -264,7 +262,6 @@ async function startMicrophone() {
     ensureAudioPipeline();
     if (!audioCtx || !audioBridge) return;
 
-    // Disconnect audio element so it stops playing through speakers
     audioElement.pause();
 
     micStream = await navigator.mediaDevices.getUserMedia({
@@ -272,17 +269,9 @@ async function startMicrophone() {
     });
 
     micSourceNode = audioCtx.createMediaStreamSource(micStream);
-    // CRITICAL: Connect mic ONLY to analyserNode, NOT to audioCtx.destination to prevent acoustic feedback!
     micSourceNode.connect(audioBridge.analyserNode);
 
-    micToggleBtn.innerHTML = `
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <line x1="1" y1="1" x2="23" y2="23"></line>
-        <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>
-        <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path>
-      </svg>
-      <span>Mute Microphone</span>
-    `;
+    micToggleBtn.textContent = "Mute Mic";
     micToggleBtn.classList.remove("btn-primary");
     micToggleBtn.classList.add("btn-secondary", "active");
 
@@ -303,15 +292,7 @@ function stopMicrophone() {
     micSourceNode = null;
   }
 
-  micToggleBtn.innerHTML = `
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-      <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-      <line x1="12" y1="19" x2="12" y2="23"></line>
-      <line x1="8" y1="23" x2="16" y2="23"></line>
-    </svg>
-    <span>Enable Microphone</span>
-  `;
+  micToggleBtn.textContent = "Enable Mic";
   micToggleBtn.classList.remove("btn-secondary", "active");
   micToggleBtn.classList.add("btn-primary");
 
@@ -323,6 +304,10 @@ function togglePlayPause() {
   if (currentSource === "mic") {
     stopMicrophone();
     return;
+  }
+
+  if (!audioElement.src || audioElement.src === "" || audioElement.src.endsWith("/")) {
+    audioElement.src = demoTrackUrl;
   }
 
   if (audioElement.paused) {
@@ -342,7 +327,7 @@ let lastFpsUpdate = performance.now();
 function renderRawFFT(ctx: CanvasRenderingContext2D, width: number, height: number, dpr: number) {
   if (!audioBridge || !rawFreqData) return;
 
-  audioBridge.analyserNode.getByteFrequencyData(rawFreqData as unknown as Uint8Array<ArrayBuffer>);
+  audioBridge.analyserNode.getByteFrequencyData(rawFreqData);
 
   ctx.save();
   ctx.scale(dpr, dpr);
@@ -354,12 +339,11 @@ function renderRawFFT(ctx: CanvasRenderingContext2D, width: number, height: numb
   const barSpacing = 3;
   const barWidth = Math.max(2, (availWidth - (numBars - 1) * barSpacing) / numBars);
 
-  // Sample raw FFT bins linearly
   const binStep = Math.floor(rawFreqData.length / (numBars * 2));
 
   for (let i = 0; i < numBars; i++) {
     const binIdx = Math.min(rawFreqData.length - 1, i * binStep + 1);
-    const rawVal = rawFreqData[binIdx] / 255.0; // 0..1
+    const rawVal = rawFreqData[binIdx] / 255.0;
     const barHeight = Math.max(4, rawVal * (height * 0.85));
     const x = padding + i * (barWidth + barSpacing);
     const y = (height - barHeight) * 0.5;
@@ -378,7 +362,6 @@ function animationLoop(timestamp: number) {
   lastTimestamp = timestamp;
   const dt = Math.max(0.001, Math.min(1.0 / 30.0, rawDt));
 
-  // FPS calculation
   frameCount++;
   if (timestamp - lastFpsUpdate >= 500) {
     const fps = Math.round((frameCount * 1000) / (timestamp - lastFpsUpdate));
@@ -390,18 +373,12 @@ function animationLoop(timestamp: number) {
   const active = isAudioActive() && !isSimulatingPause;
 
   if (audioBridge && analyzer && rendererTuned) {
-    // 1. Read PCM samples from time domain (AnalyserNode.getFloatTimeDomainData)
     const pcm = audioBridge.readTimeDomainSamples();
     analyzer.pushSamples(pcm);
-
-    // 2. Step tuned spectrum analyzer
     const tunedTargets = analyzer.step(dt);
-
-    // 3. Render tuned capsules (handles spring physics and pause collapse internally)
     rendererTuned.render(tunedTargets, dt, active);
   }
 
-  // 4. Render Raw FFT if panel is visible
   if (currentMode !== "tuned") {
     const ctxRaw = canvasRaw.getContext("2d");
     if (ctxRaw) {
@@ -454,8 +431,12 @@ function setupEventListeners() {
 
       currentSource = type;
       if (type === "preset") {
-        if (audioElement.src !== "/demo-track.m4a") {
-          audioElement.src = "/demo-track.m4a";
+        if (audioElement.src !== demoTrackUrl) {
+          audioElement.src = demoTrackUrl;
+        }
+      } else if (type === "file") {
+        if (localFileUrl && audioElement.src !== localFileUrl) {
+          audioElement.src = localFileUrl;
         }
       }
     });
@@ -465,36 +446,56 @@ function setupEventListeners() {
   playPauseBtn.addEventListener("click", togglePlayPause);
   filePlayPauseBtn.addEventListener("click", togglePlayPause);
 
-  // Audio progress and scrubber
+  // Audio progress and scrubber synchronization for both preset and local file views
   audioElement.addEventListener("timeupdate", () => {
     if (!isNaN(audioElement.duration) && audioElement.duration > 0) {
       const pct = (audioElement.currentTime / audioElement.duration) * 100;
+      const curFormatted = formatTime(audioElement.currentTime);
+      const totalFormatted = formatTime(audioElement.duration);
+
       progressBarFill.style.width = `${pct}%`;
-      currentTimeLabel.textContent = formatTime(audioElement.currentTime);
-      totalTimeLabel.textContent = formatTime(audioElement.duration);
+      currentTimeLabel.textContent = curFormatted;
+      totalTimeLabel.textContent = totalFormatted;
+
+      if (fileProgressBarFill) {
+        fileProgressBarFill.style.width = `${pct}%`;
+        fileCurrentTime.textContent = curFormatted;
+        fileTotalTime.textContent = totalFormatted;
+      }
     }
   });
 
   audioElement.addEventListener("loadedmetadata", () => {
-    totalTimeLabel.textContent = formatTime(audioElement.duration);
+    const formatted = formatTime(audioElement.duration);
+    totalTimeLabel.textContent = formatted;
+    if (fileTotalTime) {
+      fileTotalTime.textContent = formatted;
+    }
   });
 
   audioElement.addEventListener("ended", () => {
     updatePlaybackUI(false);
   });
 
-  progressBarWrapper.addEventListener("click", (e) => {
+  const handleSeek = (wrapper: HTMLElement, e: MouseEvent) => {
     if (!isNaN(audioElement.duration) && audioElement.duration > 0) {
-      const rect = progressBarWrapper.getBoundingClientRect();
+      const rect = wrapper.getBoundingClientRect();
       const clickX = e.clientX - rect.left;
       const pct = Math.max(0, Math.min(1, clickX / rect.width));
       audioElement.currentTime = pct * audioElement.duration;
     }
-  });
+  };
 
-  // Local audio file dropzone
-  browseBtn.addEventListener("click", () => fileInput.click());
+  progressBarWrapper.addEventListener("click", (e) => handleSeek(progressBarWrapper, e));
+  if (fileProgressBarWrapper) {
+    fileProgressBarWrapper.addEventListener("click", (e) => handleSeek(fileProgressBarWrapper, e));
+  }
+
+  // Local audio file dropzone & change button
   dropzone.addEventListener("click", () => fileInput.click());
+  if (fileChangeBtn) {
+    fileChangeBtn.addEventListener("click", () => fileInput.click());
+  }
 
   fileInput.addEventListener("change", (e) => {
     const target = e.target as HTMLInputElement;
@@ -522,11 +523,14 @@ function setupEventListeners() {
 
   function handleAudioFile(file: File) {
     ensureAudioPipeline();
-    const objectUrl = URL.createObjectURL(file);
-    audioElement.src = objectUrl;
+    localFileUrl = URL.createObjectURL(file);
+    audioElement.src = localFileUrl;
     localFileTitle.textContent = file.name;
     localFileDesc.textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB · Local File`;
     filePlayerRow.style.display = "flex";
+    if (fileProgressContainer) {
+      fileProgressContainer.style.display = "flex";
+    }
     dropzone.style.display = "none";
     audioElement.play().then(() => updatePlaybackUI(true)).catch(console.error);
   }
@@ -574,7 +578,7 @@ function setupEventListeners() {
   btnTestCollapse.addEventListener("click", () => {
     isSimulatingPause = !isSimulatingPause;
     btnTestCollapse.classList.toggle("active", isSimulatingPause);
-    btnTestCollapse.textContent = isSimulatingPause ? "Resuming Dynamic Bounce" : "Simulate Pause Collapse";
+    btnTestCollapse.textContent = isSimulatingPause ? "Resume Dynamic Bounce" : "Simulate Pause";
   });
 
   // Reset knobs to defaults
@@ -600,6 +604,8 @@ function setupEventListeners() {
       analyzer.noiseGateScale = noiseGateScale;
     }
     if (rendererTuned) {
+      rendererTuned.setSpringParameters(springDuration, springDamping);
+      rendererTuned.setPauseParameters(pauseDuration, pauseDamping);
       rendererTuned.reset();
     }
   });
@@ -607,10 +613,10 @@ function setupEventListeners() {
   // Accordion toggle
   accordionToggle.addEventListener("click", () => {
     const isOpen = accordionBody.classList.toggle("open");
-    accordionArrow.classList.toggle("open", isOpen);
+    accordionStatus.textContent = isOpen ? "[-]" : "[+]";
   });
 
-  // Tuning knobs
+  // Live DSP & Spring Knobs
   sliderReactivity.addEventListener("input", () => {
     reactivity = parseFloat(sliderReactivity.value);
     reactivityVal.textContent = `${reactivity.toFixed(2)}x`;
@@ -630,12 +636,17 @@ function setupEventListeners() {
   sliderSpringDuration.addEventListener("input", () => {
     springDuration = parseFloat(sliderSpringDuration.value);
     springDurationVal.textContent = `${springDuration.toFixed(3)} s`;
-    // Update renderer solvers if needed
+    if (rendererTuned) {
+      rendererTuned.setSpringParameters(springDuration, springDamping);
+    }
   });
 
   sliderSpringDamping.addEventListener("input", () => {
     springDamping = parseFloat(sliderSpringDamping.value);
     springDampingVal.textContent = springDamping.toFixed(2);
+    if (rendererTuned) {
+      rendererTuned.setSpringParameters(springDuration, springDamping);
+    }
   });
 
   // Color Swatches
@@ -646,7 +657,8 @@ function setupEventListeners() {
       const color = swatch.getAttribute("data-color");
       if (color && rendererTuned) {
         capsuleColor = color;
-        rendererTuned.color = color;
+        rendererTuned.setColor(color);
+        document.documentElement.style.setProperty("--capsule-color", color);
       }
     });
   });
@@ -665,23 +677,7 @@ function setupEventListeners() {
     const isDark = html.getAttribute("data-theme") === "dark";
     const nextTheme = isDark ? "light" : "dark";
     html.setAttribute("data-theme", nextTheme);
-
-    themeIconSun.style.display = isDark ? "block" : "none";
-    themeIconMoon.style.display = isDark ? "none" : "block";
-
-    // Adjust monochrome swatch color
-    const defaultSwatch = document.querySelector('.color-swatch[data-color="#ffffff"], .color-swatch[data-color="#121417"]') as HTMLElement;
-    if (defaultSwatch) {
-      const newColor = nextTheme === "dark" ? "#ffffff" : "#121417";
-      defaultSwatch.setAttribute("data-color", newColor);
-      defaultSwatch.style.backgroundColor = newColor;
-      if (capsuleColor === "#ffffff" || capsuleColor === "#121417") {
-        capsuleColor = newColor;
-        if (rendererTuned) {
-          rendererTuned.color = newColor;
-        }
-      }
-    }
+    themeToggleBtn.textContent = isDark ? "Dark" : "Light";
   });
 
   // Window resize observer
@@ -699,6 +695,9 @@ function setupEventListeners() {
 // --- Entry Point ---
 
 function main() {
+  // Pre-load default audio so clicking play immediately works
+  audioElement.src = demoTrackUrl;
+
   initAnalyzerAndRenderer();
   setupEventListeners();
   updateVisualizerLayout();

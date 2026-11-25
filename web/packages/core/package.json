@@ -1,7 +1,7 @@
 {
-  "name": "@capsule-wave/core",
+  "name": "@alwave/core",
   "version": "1.0.0",
-  "description": "Zero-dependency pure DSP core for CapsuleWave audio spectrum analysis",
+  "description": "Zero-dependency pure DSP core for alwave (apple-like-waves) audio spectrum analysis",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

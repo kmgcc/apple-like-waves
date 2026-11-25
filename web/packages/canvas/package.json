@@ -1,7 +1,7 @@
 {
-  "name": "@capsule-wave/canvas",
+  "name": "@alwave/canvas",
   "version": "1.0.0",
-  "description": "HTML5 Canvas renderer and 2nd-order spring physics solver for CapsuleWave",
+  "description": "HTML5 Canvas renderer and 2nd-order spring physics solver for alwave (apple-like-waves)",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -16,7 +16,7 @@
     "build": "tsc"
   },
   "dependencies": {
-    "@capsule-wave/core": "workspace:*"
+    "@alwave/core": "workspace:*"
   },
   "files": [
     "dist",

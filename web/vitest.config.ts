@@ -11,8 +11,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@capsule-wave/core": path.resolve(__dirname, "packages/core/src/index.ts"),
-      "@capsule-wave/canvas": path.resolve(__dirname, "packages/canvas/src/index.ts"),
+      "@alwave/core": path.resolve(__dirname, "packages/core/src/index.ts"),
+      "@alwave/canvas": path.resolve(__dirname, "packages/canvas/src/index.ts"),
     },
   },
 });

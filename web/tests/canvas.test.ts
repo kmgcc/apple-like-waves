@@ -3,7 +3,8 @@ import {
   CapsuleSpringSolver,
   CapsuleSpringFollower,
   CapsuleMetrics,
-} from "@capsule-wave/canvas";
+  AlwaveCanvasRenderer,
+} from "@alwave/canvas";
 
 describe("CapsuleSpringSolver", () => {
   it("simulates underdamped step with slight overshoot", () => {
@@ -75,5 +76,11 @@ describe("CapsuleMetrics", () => {
     const fMax = metrics.frame(0, 1.0);
     expect(fMax.height).toBeCloseTo(90.0, 4);
     expect(fMax.width).toBeCloseTo(4.0 * (1.0 + 0.145), 4);
+  });
+});
+
+describe("AlwaveCanvasRenderer exports", () => {
+  it("exports AlwaveCanvasRenderer", () => {
+    expect(AlwaveCanvasRenderer).toBeDefined();
   });
 });

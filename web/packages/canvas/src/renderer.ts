@@ -19,7 +19,7 @@ export interface CanvasRendererOptions {
  * 2D Canvas capsule spectrum visualizer with subpixel float rendering,
  * devicePixelRatio scaling, and smooth collapse on pause.
  */
-export class CapsuleWaveCanvasRenderer {
+export class AlwaveCanvasRenderer {
   public readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
 
@@ -82,6 +82,34 @@ export class CapsuleWaveCanvasRenderer {
       this.bandCount = n;
       this.follower.setCount(n);
     }
+  }
+
+  /**
+   * Dynamically updates spring settle duration and damping ratio for active playback.
+   */
+  public setSpringParameters(duration: number, dampingFraction: number): void {
+    const omega = 8.95 / Math.max(0.01, duration);
+    this.playSolver.response = (2.0 * Math.PI) / omega;
+    this.playSolver.dampingFraction = Math.max(0.0, dampingFraction);
+    if (this.isPlaying) {
+      this.follower.solver = this.playSolver;
+    }
+  }
+
+  /**
+   * Dynamically updates pause collapse settle duration and damping ratio.
+   */
+  public setPauseParameters(duration: number, dampingFraction: number): void {
+    const omega = 8.95 / Math.max(0.01, duration);
+    this.pauseSolver.response = (2.0 * Math.PI) / omega;
+    this.pauseSolver.dampingFraction = Math.max(0.0, dampingFraction);
+    if (!this.isPlaying) {
+      this.follower.solver = this.pauseSolver;
+    }
+  }
+
+  public setColor(color: string | ((index: number, count: number) => string)): void {
+    this.color = color;
   }
 
   /**
@@ -184,3 +212,4 @@ export class CapsuleWaveCanvasRenderer {
     this.follower.reset();
   }
 }
+

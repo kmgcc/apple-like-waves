@@ -17,7 +17,7 @@ importers:
 
   packages/canvas:
     dependencies:
-      '@capsule-wave/core':
+      '@alwave/core':
         specifier: workspace:*
         version: link:../core
 

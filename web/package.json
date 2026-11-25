@@ -1,9 +1,9 @@
 {
-  "name": "capsule-wave-web",
+  "name": "alwave-web",
   "private": true,
   "type": "module",
   "scripts": {
-    "build": "pnpm --filter \"@capsule-wave/*\" build",
+    "build": "pnpm --filter \"@alwave/*\" build",
     "test": "vitest run"
   },
   "devDependencies": {

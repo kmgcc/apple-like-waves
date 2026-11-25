@@ -2,7 +2,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "CapsuleWave",
+    name: "apple-like-waves",
     platforms: [
         .macOS(.v14),
         .iOS(.v16)
@@ -10,7 +10,7 @@ let package = Package(
     products: [
         .library(name: "SpectrumCore", targets: ["SpectrumCore"]),
         .library(name: "SpectrumUI", targets: ["SpectrumUI"]),
-        .library(name: "CapsuleWave", targets: ["SpectrumCore", "SpectrumUI"])
+        .library(name: "Alwave", targets: ["SpectrumCore", "SpectrumUI"])
     ],
     targets: [
         .target(

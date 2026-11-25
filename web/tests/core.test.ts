@@ -7,7 +7,7 @@ import {
   SpectrumAnalyzer,
   createSpectrumAnalyzer,
   recommendedBandCount,
-} from "@capsule-wave/core";
+} from "@alwave/core";
 
 describe("TuningProfile", () => {
   it("has valid default parameters matching canonical spec", () => {
