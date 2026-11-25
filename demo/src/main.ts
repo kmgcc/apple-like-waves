@@ -120,13 +120,15 @@ function formatTime(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
-function updateCapsuleProportions(canvasWidth: number) {
+function updateCapsuleProportions(canvasWidth?: number, canvasHeight?: number) {
   if (!rendererTuned) return;
-  const maxClusterW = Math.min(canvasWidth * 0.78, bandCount * 22);
+  const w = canvasWidth || canvasTuned.clientWidth || 400;
+  const h = canvasHeight || canvasTuned.clientHeight || 136;
+  const maxClusterW = Math.min(w * 0.72, bandCount * 14);
   const pitch = maxClusterW / bandCount;
-  rendererTuned.capsuleWidth = Math.max(3, Math.min(11, pitch * 0.54));
-  rendererTuned.capsuleSpacing = Math.max(2, Math.min(9, pitch * 0.46));
-  rendererTuned.maxHeightRatio = 0.68;
+  rendererTuned.capsuleWidth = Math.max(2.5, Math.min(7.5, pitch * 0.54));
+  rendererTuned.capsuleSpacing = Math.max(2.0, Math.min(6.5, pitch * 0.46));
+  rendererTuned.maxHeightRatio = Math.min(0.55, 72 / Math.max(1, h));
 }
 
 function ensureAudioPipeline(): WebAudioBridge {
@@ -178,6 +180,7 @@ function initAnalyzerAndRenderer() {
     noiseGateScale,
   });
 
+  const h = canvasTuned.clientHeight || 136;
   rendererTuned = new AlwaveCanvasRenderer(canvasTuned, {
     bandCount,
     color: capsuleColor,
@@ -185,11 +188,11 @@ function initAnalyzerAndRenderer() {
     springDamping,
     pauseDuration,
     pauseDamping,
-    maxHeightRatio: 0.68,
+    maxHeightRatio: Math.min(0.55, 72 / Math.max(1, h)),
   });
 
   const w = canvasTuned.clientWidth || 400;
-  updateCapsuleProportions(w);
+  updateCapsuleProportions(w, h);
 
   hudBands.textContent = `${bandCount} 段`;
   bandCountVal.textContent = bandCount.toString();
@@ -222,7 +225,7 @@ function updateVisualizerLayout() {
 function resizeRawCanvas() {
   const dpr = window.devicePixelRatio || 1;
   const w = canvasRaw.clientWidth || 300;
-  const h = canvasRaw.clientHeight || 200;
+  const h = canvasRaw.clientHeight || 136;
   canvasRaw.width = Math.round(w * dpr);
   canvasRaw.height = Math.round(h * dpr);
 }
@@ -355,15 +358,15 @@ function renderRawFFT(ctx: CanvasRenderingContext2D, width: number, height: numb
   ctx.clearRect(0, 0, width, height);
 
   const numBars = bandCount;
-  const maxClusterW = Math.min(width * 0.78, numBars * 22);
+  const maxClusterW = Math.min(width * 0.72, numBars * 14);
   const pitch = maxClusterW / numBars;
-  const barWidth = Math.max(3, Math.min(11, pitch * 0.54));
-  const barSpacing = Math.max(2, Math.min(9, pitch * 0.46));
+  const barWidth = Math.max(2.5, Math.min(7.5, pitch * 0.54));
+  const barSpacing = Math.max(2.0, Math.min(6.5, pitch * 0.46));
   const totalW = numBars * barWidth + (numBars - 1) * barSpacing;
   const startX = (width - totalW) * 0.5;
 
   const binStep = Math.floor(rawFreqData.length / (numBars * 2));
-  const maxH = height * 0.68;
+  const maxH = Math.min(height * 0.55, 72);
 
   for (let i = 0; i < numBars; i++) {
     const binIdx = Math.min(rawFreqData.length - 1, i * binStep + 1);
@@ -415,7 +418,7 @@ function animationLoop(timestamp: number) {
     if (ctxRaw) {
       const dpr = window.devicePixelRatio || 1;
       const w = canvasRaw.clientWidth || 300;
-      const h = canvasRaw.clientHeight || 200;
+      const h = canvasRaw.clientHeight || 136;
       renderRawFFT(ctxRaw, w, h, dpr);
     }
   }
