@@ -1,134 +1,136 @@
-# apple-like-waves (alwave) Algorithm Specification
+# apple-like-waves (alwave) 算法设计说明
 
-This document details the mathematical models, digital signal processing (DSP) pipeline, and physics simulation underpinning apple-like-waves (alwave).
-
----
-
-## 1. Architecture Overview
-
-apple-like-waves (alwave) transforms real-time mono pulse-code modulation (PCM) audio into smooth, responsive, organic capsule bars:
-
-```
-Audio PCM (48 kHz)
-   │
-   ▼
-[2048-Sample Circular Buffer]
-   │
-   ▼
-[Hann Windowing + Real FFT]
-   │
-   ▼
-[Calibrated Octave Binning]
-   │
-   ▼
-[Nonlinear Amplitude Compression]
-   │
-   ▼
-[Dynamic Attack Boost & Noise Gate]
-   │
-   ▼
-[Second-Order Spring Dynamics]
-   │
-   ▼
-Visual Capsule Dimensions (Width & Height)
-```
+本文档说明 alwave 音频胶囊频谱涉及的数学模型、数字信号处理管线与物理模拟方法。
 
 ---
 
-## 2. Spectral Analysis Front-End
+## 1. 信号处理流程
 
-### 2.1 Windowing & FFT
-- Input: Monophonic audio buffer $x[n]$ with frame size $N = 2048$ samples (typically sampled at 48 kHz, yielding a frequency resolution of $\Delta f \approx 23.4375\text{ Hz}$).
-- Window Function: Periodic Hann window:
+alwave 将实时输入的单声道脉冲编码调制（PCM）音频信号转换为平滑、具备动态呼吸感的胶囊频谱：
+
+```
+音频 PCM 采样 (48 kHz)
+   │
+   ▼
+[2048 点循环缓冲区]
+   │
+   ▼
+[Hann 加窗与实数 FFT]
+   │
+   ▼
+[标定八度分箱与谱密度换算]
+   │
+   ▼
+[非线性幅度压缩]
+   │
+   ▼
+[动态起音加成与软死区门控]
+   │
+   ▼
+[二阶弹簧动力学方程求解]
+   │
+   ▼
+绘制胶囊几何尺寸 (宽度与高度)
+```
+
+---
+
+## 2. 频谱分析前级
+
+### 2.1 加窗与离散傅里叶变换
+- 输入：单声道音频切片 $x[n]$，窗长 $N = 2048$。以 48 kHz 采样率为例，频率分辨率 $\Delta f \approx 23.4375\text{ Hz}$。
+- 周期性 Hann 窗函数：
   $$w[n] = 0.5 - 0.5 \cos\left(\frac{2\pi n}{N}\right), \quad n \in [0, N-1]$$
-- Windowed signal: $x_w[n] = x[n] \cdot w[n]$
-- Discrete Fourier Transform:
+- 加窗信号：$x_w[n] = x[n] \cdot w[n]$
+- 离散傅里叶变换：
   $$X[k] = \sum_{n=0}^{N-1} x_w[n] e^{-j 2\pi k n / N}, \quad k \in [0, N/2]$$
-- Magnitude normalization:
+- 幅度谱归一化：
   $$|X[k]| = \frac{2}{N/2} \cdot \sqrt{\text{Re}(X[k])^2 + \text{Im}(X[k])^2}$$
 
-### 2.2 Energy Scaling Constant
-An energy correction factor $K_{\text{norm}} = 2 \sqrt{\frac{8}{3}}$ is applied to account for the coherent gain and equivalent noise bandwidth of the Hann window.
+### 2.2 能量缩放系数
+为补偿 Hann 窗的相干增益与等效噪声带宽，应用能量修正因数：
+$$K_{\text{norm}} = 2 \sqrt{\frac{8}{3}}$$
 
 ---
 
-## 3. Octave Band Mapping & Density Compensation
+## 3. 八度分箱与谱密度补偿
 
-### 3.1 Base Frequency Anchors
-The baseline 6-band spectrum uses empirical acoustic boundary edges:
+### 3.1 基准频段划分
+基准 6 段频谱采用经声学测量的经验频段边界：
 $$F_{\text{edges}} = [20, 81, 170, 527, 1500, 4500, 10000]\text{ Hz}$$
 
-The logarithmic center frequency of each octave band is given by:
+各频段对数几何中心频率定义为：
 $$f_{c, i} = \sqrt{F_{\text{edges}}[i] \cdot F_{\text{edges}}[i+1]}$$
 
-### 3.2 Dynamic Band Allocation ($N_{\text{bands}} > 6$)
-When expanding beyond 6 bars:
-1. The lower boundary is raised to $40\text{ Hz}$ to avoid subsonic rumble.
-2. Available bars are allocated proportionally to the fractional octaves of each parent band:
+### 3.2 动态扩展分段（段数 $N_{\text{bands}} > 6$）
+当柱数扩展至 6 段以上时：
+1. 低频显示下限提升至 $40\text{ Hz}$，规避超低频次声抖动。
+2. 频段配额按照各母带覆盖的八度比例分配：
    $$\text{octave}_p = \log_2\left(\frac{F_{\text{edges}}[p+1]}{F_{\text{edges}}[p]}\right)$$
-3. Each sub-band is guaranteed at least one discrete FFT bin.
-4. Density Normalization:
-   Because sub-bands divide the energy across fewer FFT bins, the energy density is scaled to maintain spectral consistency:
+3. 确保每个子频段至少分配到一个离散 FFT 频点。
+4. 谱密度还原：
+   子频段切分后单个区间内的频点数减少，累加绝对值相应降低。通过频点数比例将子段能量还原至母带量级：
    $$S_{\text{density}}[i] = \frac{B_{\text{parent}}}{B_{\text{sub}}[i]}$$
-   where $B$ denotes the number of FFT bins spanning the respective interval. A trim factor of $0.85$ is applied to fractional sub-bands to prevent saturation.
+   其中 $B$ 为区间内的频点数。对细分切片应用 $0.85$ 的修正系数，保持全景视觉能量均衡。
 
 ---
 
-## 4. Nonlinear Amplitude Calibration
+## 4. 非线性幅度映射
 
-For each frequency band $i$, the accumulated magnitude $A_i$ is mapped through tuned gain $g_i$ and exponent $e_i$:
+对各频段累加幅度 $A_i$，应用独立的标定增益 $g_i$ 与幂次指数 $e_i$：
 $$v_i = \text{clamp}\left( (A_i \cdot g_i)^{e_i}, 0.0, 1.0 \right)$$
 
-Baseline 6-band calibration vectors:
-- **Gain ($g$)**: `[0.706, 0.706, 0.433, 0.433, 0.339, 0.300]`
-- **Exponent ($e$)**: `[1.15, 0.85, 0.75, 0.85, 0.70, 0.75]`
+6 段基准标定向量：
+- 增益向量 $g$：`[0.706, 0.706, 0.433, 0.433, 0.339, 0.300]`
+- 指数向量 $e$：`[1.15, 0.85, 0.75, 0.85, 0.70, 0.75]`
 
-For arbitrary band counts, parameters are interpolated at the band centers using cubic Hermite (smoothstep) curves across logarithmic frequency coordinates.
+对于任意频段数，通过三次 Hermite 插值（smoothstep）在对数频率坐标上插值获取段中心参数。
 
 ---
 
-## 5. Transient Attack Boost & Dynamic Gating
+## 5. 瞬态起音加成与动态门控
 
-To enhance visual punch and rhythmic responsiveness during quiet-to-loud transitions without cluttering continuous loud passages:
+为凸显节奏打击乐的瞬态冲击力，同时避免大音量段落视觉过度饱和，系统引入动态起音增强。
 
-### 5.1 Three-Tap Reference History
-A low-pass reference baseline tracks historical levels:
+### 5.1 三拍参考包络
+使用延时加权均值跟踪近期背景电平：
 $$v_{\text{ref}}[t] = 0.50 \cdot v[t] + 0.30 \cdot v[t-1] + 0.20 \cdot v[t-2]$$
 $$\Delta v_{\text{rise}} = \max(0.0, v[t] - v_{\text{ref}}[t])$$
 
-### 5.2 Slow Envelope Follower (Noise & Energy Floor)
-A continuous one-pole recursive filter tracks ambient band energy:
+### 5.2 慢跟随滤波
+以单极点低通滤波器跟踪背景能量平均水平：
 $$\alpha = 1 - e^{-\Delta t / \tau_{\text{slow}}}, \quad \tau_{\text{slow}} = 0.80\text{ s}$$
 $$v_{\text{slow}}[t] = v_{\text{slow}}[t-1] + \alpha \cdot (v[t] - v_{\text{slow}}[t-1])$$
 
-### 5.3 Transient Punch Factor & Soft Deadband
-- Quiet-passage gate:
+### 5.3 门限函数与软死区
+- 安静段落门控：
   $$\text{Gate} = \text{clamp}\left(1.0 - \frac{v_{\text{slow}}}{0.35}, 0.0, 1.0\right)$$
-- Soft Deadband function (prevents jitter below threshold):
+- 软死区过渡（过滤幅值微小的噪点波动）：
   $$\text{Shape}(x) = \text{clamp}\left(\frac{x - 0.01}{0.06 - 0.01}, 0.0, 1.0\right)$$
-- Final target height $H_i$:
+- 最终目标高度：
   $$H_i = \text{clamp}\left(v_i + (P_i \cdot \text{Gate} + 1.05) \cdot \Delta v_{\text{rise}} \cdot \text{Shape}(\Delta v_{\text{rise}}), 0.0, 1.0\right)$$
-  where baseline punch factors $P = [3.45, 2.07, 3.45, 11.5, 1.38, 1.38]$.
+  基准起音向量 $P = [3.45, 2.07, 3.45, 11.5, 1.38, 1.38]$。
 
 ---
 
-## 6. Second-Order Damped Spring Solver
+## 6. 二阶阻尼弹簧动力学
 
-Display positions evolve under the analytical closed-form solution of a damped harmonic oscillator:
+胶囊柱显示位置由受阻尼二阶谐振子方程驱动：
 $$\ddot{x} + 2\zeta\omega_n \dot{x} + \omega_n^2 (x - x_{\text{target}}) = 0$$
 
-- **Natural Angular Frequency**: $\omega_n = 27.54\text{ rad/s}$ (settling time $T_s \approx 0.325\text{ s}$)
-- **Damping Ratio**: $\zeta = 0.83$ (mild overshoot $\approx 0.9\%$, avoiding perceptual lag and jitter)
+- 自然固有角频率：$\omega_n = 27.54\text{ rad/s}$（特征收敛时长约 $0.325\text{ s}$）
+- 阻尼比：$\zeta = 0.83$（理论过冲量约 $0.9\%$）
 
-The analytical solution guarantees unconditional numerical stability regardless of frame pacing ($dt$).
+采用解析解析解迭代状态，在时间步长 $\Delta t$ 变动时保持数值稳定。
 
 ---
 
-## 7. Capsule Geometry Mapping
+## 7. 连续胶囊几何映射
 
-Visual capsules dynamically scale in both dimensions to convey energy:
-- **Height**:
+胶囊在高度变化时同步微调宽度，展现柔和的物理形变质感：
+- 高度映射：
   $$h = \max(H_{\text{display}} \cdot H_{\text{max}}, w_{\text{slot}} \cdot 0.5)$$
-- **Dynamic Width Expansion**:
+- 连续宽度随高度微增：
   $$w = w_{\text{base}} \cdot (1.0 + 0.145 \cdot H_{\text{display}})$$
-  Continuous floating-point path rendering prevents subpixel snapping artifacts on high-DPI displays.
+
+绘制过程基于浮点矢量路径与抗锯齿处理，避免整像素吸附引起的视觉跳变。

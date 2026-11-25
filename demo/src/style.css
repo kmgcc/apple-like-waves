@@ -1,5 +1,5 @@
 :root {
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, Monaco, Consolas, "Liberation Mono", monospace;
 
   /* Dark theme by default (pure flat tones, zero shadows, zero borders) */
@@ -12,7 +12,7 @@
   --text-muted: #5a626f;
   --accent-color: #3b82f6;
   --accent-hover: #60a5fa;
-  --capsule-color: #e6c450; /* AURORA - The Sun cover sunlit gold */
+  --capsule-color: #e6c450; /* AURORA - The Sun 封面暖金色 */
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
@@ -57,9 +57,9 @@ body {
 }
 
 .header-inner {
-  max-width: 1100px;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 18px 24px;
+  padding: 14px 20px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -72,7 +72,7 @@ body {
 }
 
 .brand-title {
-  font-size: 19px;
+  font-size: 18px;
   font-weight: 600;
   letter-spacing: -0.02em;
 }
@@ -87,26 +87,34 @@ body {
   font-family: var(--font-mono);
   background-color: var(--bg-tertiary);
   color: var(--text-secondary);
-  padding: 3px 8px;
+  padding: 2px 7px;
   border-radius: var(--radius-sm);
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
-/* Container */
+/* 2-Column Compact Grid */
 .app-container {
-  max-width: 1100px;
+  max-width: 1120px;
   margin: 0 auto;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
+  padding: 16px 20px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.28fr) minmax(320px, 0.92fr);
+  gap: 16px;
   flex: 1;
   width: 100%;
+  align-items: start;
+}
+
+.column-left,
+.column-right {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 /* Flat Cards */
@@ -115,10 +123,10 @@ body {
 .controls-card {
   background-color: var(--bg-secondary);
   border-radius: var(--radius-lg);
-  padding: 24px;
+  padding: 18px 20px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
 }
 
 /* Visualizer Stage */
@@ -127,7 +135,7 @@ body {
   align-items: center;
   justify-content: space-between;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 10px;
 }
 
 .mode-switcher {
@@ -141,9 +149,9 @@ body {
 .mode-btn {
   background: transparent;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
-  padding: 6px 14px;
+  padding: 5px 12px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: color 0.15s ease, background-color 0.15s ease;
@@ -161,19 +169,19 @@ body {
 .stage-metrics {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-secondary);
 }
 
 .metric-pill {
   background-color: var(--bg-tertiary);
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
 }
 
 .status-dot {
@@ -189,10 +197,10 @@ body {
 
 /* Visualizer Panes */
 .visualizer-wrapper {
-  min-height: 220px;
+  min-height: 200px;
   width: 100%;
   display: flex;
-  gap: 16px;
+  gap: 12px;
 }
 
 .canvas-panel {
@@ -206,7 +214,7 @@ body {
 }
 
 .canvas-header {
-  padding: 10px 16px;
+  padding: 8px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -214,10 +222,9 @@ body {
 }
 
 .canvas-title {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.03em;
-  text-transform: uppercase;
   color: var(--text-secondary);
 }
 
@@ -231,7 +238,7 @@ body {
   flex: 1;
   position: relative;
   width: 100%;
-  height: 220px;
+  height: 200px;
 }
 
 .spectrum-canvas {
@@ -243,7 +250,7 @@ body {
 /* Audio Source Card */
 .source-tabs {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   background-color: var(--bg-tertiary);
   padding: 3px;
   border-radius: var(--radius-md);
@@ -253,9 +260,9 @@ body {
 .tab-btn {
   background: transparent;
   color: var(--text-secondary);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
-  padding: 6px 14px;
+  padding: 5px 12px;
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: color 0.15s ease, background-color 0.15s ease;
@@ -271,23 +278,23 @@ body {
 }
 
 .source-content {
-  padding-top: 6px;
+  padding-top: 2px;
 }
 
 .track-player {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .player-main-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 14px;
 }
 
 .play-pause-btn {
-  padding: 8px 18px;
+  padding: 7px 16px;
   border-radius: var(--radius-md);
   background-color: var(--text-primary);
   color: var(--bg-primary);
@@ -307,9 +314,12 @@ body {
 }
 
 .track-title {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .track-desc {
@@ -320,19 +330,19 @@ body {
 .progress-container {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 .time-label {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-secondary);
-  min-width: 42px;
+  min-width: 36px;
 }
 
 .progress-bar-wrapper {
   flex: 1;
-  height: 6px;
+  height: 5px;
   background-color: var(--bg-tertiary);
   border-radius: var(--radius-full);
   position: relative;
@@ -353,7 +363,7 @@ body {
 .dropzone {
   background-color: var(--bg-primary);
   border-radius: var(--radius-md);
-  padding: 32px 20px;
+  padding: 24px 16px;
   text-align: center;
   cursor: pointer;
   transition: background-color 0.15s ease;
@@ -365,13 +375,13 @@ body {
 }
 
 .dropzone-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   margin-bottom: 4px;
 }
 
 .dropzone-hint {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-secondary);
 }
 
@@ -382,17 +392,17 @@ body {
   justify-content: space-between;
   background-color: var(--bg-primary);
   border-radius: var(--radius-md);
-  padding: 18px;
+  padding: 14px 16px;
 }
 
 .mic-info-title {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 .mic-info-desc {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-secondary);
 }
 
@@ -400,9 +410,9 @@ body {
 .btn-primary {
   background-color: var(--text-primary);
   color: var(--bg-primary);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
-  padding: 8px 16px;
+  padding: 6px 14px;
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: opacity 0.15s ease;
@@ -415,9 +425,9 @@ body {
 .btn-secondary {
   background-color: var(--bg-tertiary);
   color: var(--text-primary);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
-  padding: 7px 14px;
+  padding: 6px 12px;
   border-radius: var(--radius-md);
   cursor: pointer;
   transition: background-color 0.15s ease;
@@ -432,17 +442,29 @@ body {
   color: var(--bg-primary);
 }
 
-/* Controls Grid */
-.controls-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-  gap: 20px;
+/* Right Column Control Box */
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.controls-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .control-group {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .control-label-row {
@@ -452,31 +474,30 @@ body {
 }
 
 .control-label {
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 12px;
   color: var(--text-secondary);
 }
 
 .control-value {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-primary);
   background-color: var(--bg-tertiary);
-  padding: 2px 8px;
+  padding: 1px 6px;
   border-radius: var(--radius-sm);
 }
 
 .slider-wrapper {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 
 input[type="range"] {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 5px;
+  height: 4px;
   background: var(--bg-tertiary);
   border-radius: var(--radius-full);
 }
@@ -484,8 +505,8 @@ input[type="range"] {
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: var(--text-primary);
   cursor: pointer;
@@ -496,49 +517,16 @@ input[type="range"]::-webkit-slider-thumb:hover {
   transform: scale(1.15);
 }
 
-/* Accordion for Knobs */
-.accordion-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-top: 14px;
-  cursor: pointer;
-  user-select: none;
-}
-
-.accordion-title {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.accordion-status {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.accordion-body {
-  display: none;
-  flex-direction: column;
-  gap: 18px;
-  padding-top: 14px;
-}
-
-.accordion-body.open {
-  display: flex;
-}
-
 .color-palette {
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .color-swatch {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   cursor: pointer;
   opacity: 0.45;
@@ -555,15 +543,21 @@ input[type="range"]::-webkit-slider-thumb:hover {
   transform: scale(1.2);
 }
 
+.actions-row {
+  display: flex;
+  gap: 8px;
+  padding-top: 4px;
+}
+
 /* Footer */
 .app-footer {
-  padding: 24px;
+  padding: 16px 20px;
   font-size: 12px;
   color: var(--text-muted);
 }
 
 .footer-inner {
-  max-width: 1100px;
+  max-width: 1120px;
   margin: 0 auto;
   display: flex;
   align-items: center;
@@ -572,7 +566,7 @@ input[type="range"]::-webkit-slider-thumb:hover {
 
 .footer-links {
   display: flex;
-  gap: 16px;
+  gap: 14px;
 }
 
 .footer-link {
@@ -584,15 +578,16 @@ input[type="range"]::-webkit-slider-thumb:hover {
   color: var(--text-primary);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 860px) {
+  .app-container {
+    grid-template-columns: 1fr;
+    padding: 12px 16px;
+  }
   .visualizer-wrapper {
     flex-direction: column;
   }
-  .controls-row {
-    grid-template-columns: 1fr;
-  }
   .footer-inner {
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
   }
 }

@@ -9,7 +9,7 @@ import {
   WebAudioBridge,
 } from "@alwave/canvas";
 
-// --- State Variables ---
+// --- 状态定义 ---
 type VisualizerMode = "tuned" | "raw" | "compare";
 type AudioSourceType = "preset" | "file" | "mic";
 
@@ -23,11 +23,11 @@ let springDuration = 0.325;
 let springDamping = 0.83;
 let pauseDuration = 0.6;
 let pauseDamping = 1.0;
-let capsuleColor = "#e6c450"; // AURORA - The Sun cover gold-yellow
+let capsuleColor = "#e6c450"; // 默认封面暖金配色
 let isSimulatingPause = false;
 let localFileUrl: string | null = null;
 
-// Audio Pipeline References
+// 音频链路引用
 let audioCtx: AudioContext | null = null;
 let audioBridge: WebAudioBridge | null = null;
 let mediaElementSource: MediaElementAudioSourceNode | null = null;
@@ -35,14 +35,14 @@ let micStream: MediaStream | null = null;
 let micSourceNode: MediaStreamAudioSourceNode | null = null;
 let rawFreqData: Uint8Array<ArrayBuffer> | null = null;
 
-// Core Analyzer & Canvas Renderers
+// 核心分析器与渲染器
 let analyzer: SpectrumAnalyzer | null = null;
 let rendererTuned: AlwaveCanvasRenderer | null = null;
 
-// Base URL for assets
+// 资源基地址
 const demoTrackUrl = `${import.meta.env.BASE_URL}demo-track.m4a`;
 
-// DOM Elements
+// DOM 元素引用
 const audioElement = document.getElementById("audio-element") as HTMLAudioElement;
 const canvasTuned = document.getElementById("canvas-tuned") as HTMLCanvasElement;
 const canvasRaw = document.getElementById("canvas-raw") as HTMLCanvasElement;
@@ -50,7 +50,7 @@ const panelTuned = document.getElementById("panel-tuned") as HTMLElement;
 const panelRaw = document.getElementById("panel-raw") as HTMLElement;
 const visualizerWrapper = document.getElementById("visualizer-wrapper") as HTMLElement;
 
-// Topbar & HUD Elements
+// 顶部栏与状态 HUD
 const modeTunedBtn = document.getElementById("mode-tuned") as HTMLButtonElement;
 const modeRawBtn = document.getElementById("mode-raw") as HTMLButtonElement;
 const modeCompareBtn = document.getElementById("mode-compare") as HTMLButtonElement;
@@ -60,7 +60,7 @@ const hudBands = document.getElementById("hud-bands") as HTMLElement;
 const hudFps = document.getElementById("hud-fps") as HTMLElement;
 const hudRate = document.getElementById("hud-rate") as HTMLElement;
 
-// Source Tab Elements
+// 音频源标签页
 const tabPreset = document.getElementById("tab-preset") as HTMLButtonElement;
 const tabFile = document.getElementById("tab-file") as HTMLButtonElement;
 const tabMic = document.getElementById("tab-mic") as HTMLButtonElement;
@@ -68,14 +68,14 @@ const viewPreset = document.getElementById("view-preset") as HTMLElement;
 const viewFile = document.getElementById("view-file") as HTMLElement;
 const viewMic = document.getElementById("view-mic") as HTMLElement;
 
-// Preset Player Elements
+// 预设音频播放器组件
 const playPauseBtn = document.getElementById("play-pause-btn") as HTMLButtonElement;
 const currentTimeLabel = document.getElementById("current-time") as HTMLElement;
 const totalTimeLabel = document.getElementById("total-time") as HTMLElement;
 const progressBarWrapper = document.getElementById("progress-bar-wrapper") as HTMLElement;
 const progressBarFill = document.getElementById("progress-bar-fill") as HTMLElement;
 
-// File Upload Elements
+// 本地音频上传组件
 const dropzone = document.getElementById("dropzone") as HTMLElement;
 const fileInput = document.getElementById("file-input") as HTMLInputElement;
 const filePlayerRow = document.getElementById("file-player-row") as HTMLElement;
@@ -89,20 +89,15 @@ const fileTotalTime = document.getElementById("file-total-time") as HTMLElement;
 const fileProgressBarWrapper = document.getElementById("file-progress-bar-wrapper") as HTMLElement;
 const fileProgressBarFill = document.getElementById("file-progress-bar-fill") as HTMLElement;
 
-// Microphone Elements
+// 麦克风控制
 const micToggleBtn = document.getElementById("mic-toggle-btn") as HTMLButtonElement;
 
-// Knobs & Controls Elements
+// 右侧常驻控制项
 const sliderBands = document.getElementById("slider-bands") as HTMLInputElement;
 const bandCountVal = document.getElementById("band-count-val") as HTMLElement;
 const btnAutoWidth = document.getElementById("btn-auto-width") as HTMLButtonElement;
 const btnTestCollapse = document.getElementById("btn-test-collapse") as HTMLButtonElement;
 const btnResetKnobs = document.getElementById("btn-reset-knobs") as HTMLButtonElement;
-
-// Accordion & Sliders
-const accordionToggle = document.getElementById("accordion-toggle") as HTMLElement;
-const accordionStatus = document.getElementById("accordion-status") as HTMLElement;
-const accordionBody = document.getElementById("accordion-body") as HTMLElement;
 const sliderReactivity = document.getElementById("slider-reactivity") as HTMLInputElement;
 const reactivityVal = document.getElementById("reactivity-val") as HTMLElement;
 const sliderNoiseGate = document.getElementById("slider-noisegate") as HTMLInputElement;
@@ -113,16 +108,25 @@ const sliderSpringDamping = document.getElementById("slider-spring-damping") as 
 const springDampingVal = document.getElementById("spring-damping-val") as HTMLElement;
 const colorSwatches = document.querySelectorAll(".color-swatch");
 
-// Theme Toggle
+// 主题切换
 const themeToggleBtn = document.getElementById("theme-toggle-btn") as HTMLButtonElement;
 
-// --- Helper Functions ---
+// --- 辅助工具函数 ---
 
 function formatTime(seconds: number): string {
   if (isNaN(seconds) || seconds < 0) return "0:00";
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, "0")}`;
+}
+
+function updateCapsuleProportions(canvasWidth: number) {
+  if (!rendererTuned) return;
+  const maxClusterW = Math.min(canvasWidth * 0.78, bandCount * 22);
+  const pitch = maxClusterW / bandCount;
+  rendererTuned.capsuleWidth = Math.max(3, Math.min(11, pitch * 0.54));
+  rendererTuned.capsuleSpacing = Math.max(2, Math.min(9, pitch * 0.46));
+  rendererTuned.maxHeightRatio = 0.68;
 }
 
 function ensureAudioPipeline(): WebAudioBridge {
@@ -132,6 +136,17 @@ function ensureAudioPipeline(): WebAudioBridge {
       (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
     audioCtx = new AudioContextClass();
     hudRate.textContent = `${(audioCtx.sampleRate / 1000).toFixed(1)} kHz`;
+  }
+
+  // 保证分析器采样率与实际 AudioContext 一致
+  if (analyzer && analyzer.sampleRate !== audioCtx.sampleRate) {
+    analyzer = createSpectrumAnalyzer({
+      bandCount,
+      sampleRate: audioCtx.sampleRate,
+      tuningProfile: DEFAULT_TUNING_PROFILE,
+      reactivity,
+      noiseGateScale,
+    });
   }
 
   if (!audioBridge) {
@@ -170,9 +185,13 @@ function initAnalyzerAndRenderer() {
     springDamping,
     pauseDuration,
     pauseDamping,
+    maxHeightRatio: 0.68,
   });
 
-  hudBands.textContent = `${bandCount} bands`;
+  const w = canvasTuned.clientWidth || 400;
+  updateCapsuleProportions(w);
+
+  hudBands.textContent = `${bandCount} 段`;
   bandCountVal.textContent = bandCount.toString();
   sliderBands.value = bandCount.toString();
 }
@@ -191,6 +210,7 @@ function updateVisualizerLayout() {
 
   if (rendererTuned) {
     rendererTuned.resize();
+    updateCapsuleProportions(canvasTuned.clientWidth || 400);
   }
   resizeRawCanvas();
 
@@ -202,7 +222,7 @@ function updateVisualizerLayout() {
 function resizeRawCanvas() {
   const dpr = window.devicePixelRatio || 1;
   const w = canvasRaw.clientWidth || 300;
-  const h = canvasRaw.clientHeight || 150;
+  const h = canvasRaw.clientHeight || 200;
   canvasRaw.width = Math.round(w * dpr);
   canvasRaw.height = Math.round(h * dpr);
 }
@@ -217,7 +237,7 @@ function applyAutoWidth() {
     bandCount = clamped;
     bandCountVal.textContent = bandCount.toString();
     sliderBands.value = bandCount.toString();
-    hudBands.textContent = `${bandCount} bands`;
+    hudBands.textContent = `${bandCount} 段`;
 
     if (analyzer) {
       analyzer = createSpectrumAnalyzer({
@@ -230,11 +250,12 @@ function applyAutoWidth() {
     }
     if (rendererTuned) {
       rendererTuned.setBandCount(bandCount);
+      updateCapsuleProportions(canvasTuned.clientWidth || 400);
     }
   }
 }
 
-// --- Audio Source Management ---
+// --- 音频源状态逻辑 ---
 
 function isAudioActive(): boolean {
   if (currentSource === "mic") {
@@ -245,15 +266,15 @@ function isAudioActive(): boolean {
 
 function updatePlaybackUI(playing: boolean) {
   if (playing) {
-    playPauseBtn.textContent = "Pause";
-    filePlayPauseBtn.textContent = "Pause";
+    playPauseBtn.textContent = "暂停";
+    filePlayPauseBtn.textContent = "暂停";
     statusDot.classList.add("active");
-    statusText.textContent = currentSource === "mic" ? "Mic Active" : "Playing";
+    statusText.textContent = currentSource === "mic" ? "麦克风采集" : "播放中";
   } else {
-    playPauseBtn.textContent = "Play";
-    filePlayPauseBtn.textContent = "Play";
+    playPauseBtn.textContent = "播放";
+    filePlayPauseBtn.textContent = "播放";
     statusDot.classList.remove("active");
-    statusText.textContent = "Idle";
+    statusText.textContent = "就绪";
   }
 }
 
@@ -271,14 +292,14 @@ async function startMicrophone() {
     micSourceNode = audioCtx.createMediaStreamSource(micStream);
     micSourceNode.connect(audioBridge.analyserNode);
 
-    micToggleBtn.textContent = "Mute Mic";
+    micToggleBtn.textContent = "静音麦克风";
     micToggleBtn.classList.remove("btn-primary");
     micToggleBtn.classList.add("btn-secondary", "active");
 
     updatePlaybackUI(true);
   } catch (err) {
-    console.error("Microphone access failed:", err);
-    alert("Could not access microphone: " + (err as Error).message);
+    console.error("无法访问麦克风:", err);
+    alert("无法访问麦克风: " + (err as Error).message);
   }
 }
 
@@ -292,7 +313,7 @@ function stopMicrophone() {
     micSourceNode = null;
   }
 
-  micToggleBtn.textContent = "Enable Mic";
+  micToggleBtn.textContent = "开启麦克风";
   micToggleBtn.classList.remove("btn-secondary", "active");
   micToggleBtn.classList.add("btn-primary");
 
@@ -318,7 +339,7 @@ function togglePlayPause() {
   }
 }
 
-// --- Render Loop & Animation Frame ---
+// --- 动画循环与渲染 ---
 
 let lastTimestamp = performance.now();
 let frameCount = 0;
@@ -334,22 +355,32 @@ function renderRawFFT(ctx: CanvasRenderingContext2D, width: number, height: numb
   ctx.clearRect(0, 0, width, height);
 
   const numBars = bandCount;
-  const padding = 20;
-  const availWidth = width - padding * 2;
-  const barSpacing = 3;
-  const barWidth = Math.max(2, (availWidth - (numBars - 1) * barSpacing) / numBars);
+  const maxClusterW = Math.min(width * 0.78, numBars * 22);
+  const pitch = maxClusterW / numBars;
+  const barWidth = Math.max(3, Math.min(11, pitch * 0.54));
+  const barSpacing = Math.max(2, Math.min(9, pitch * 0.46));
+  const totalW = numBars * barWidth + (numBars - 1) * barSpacing;
+  const startX = (width - totalW) * 0.5;
 
   const binStep = Math.floor(rawFreqData.length / (numBars * 2));
+  const maxH = height * 0.68;
 
   for (let i = 0; i < numBars; i++) {
     const binIdx = Math.min(rawFreqData.length - 1, i * binStep + 1);
     const rawVal = rawFreqData[binIdx] / 255.0;
-    const barHeight = Math.max(4, rawVal * (height * 0.85));
-    const x = padding + i * (barWidth + barSpacing);
+    const barHeight = Math.max(barWidth, rawVal * maxH);
+    const x = startX + i * (barWidth + barSpacing);
     const y = (height - barHeight) * 0.5;
 
     ctx.fillStyle = currentMode === "compare" ? "rgba(239, 68, 68, 0.85)" : capsuleColor;
-    ctx.fillRect(x, y, barWidth, barHeight);
+    const r = barWidth * 0.5;
+    ctx.beginPath();
+    if (typeof ctx.roundRect === "function") {
+      ctx.roundRect(x, y, barWidth, barHeight, r);
+    } else {
+      ctx.rect(x, y, barWidth, barHeight);
+    }
+    ctx.fill();
   }
 
   ctx.restore();
@@ -384,16 +415,16 @@ function animationLoop(timestamp: number) {
     if (ctxRaw) {
       const dpr = window.devicePixelRatio || 1;
       const w = canvasRaw.clientWidth || 300;
-      const h = canvasRaw.clientHeight || 150;
+      const h = canvasRaw.clientHeight || 200;
       renderRawFFT(ctxRaw, w, h, dpr);
     }
   }
 }
 
-// --- Setup Event Listeners ---
+// --- 事件监听配置 ---
 
 function setupEventListeners() {
-  // Mode switcher
+  // 模式切换
   const modeButtons = [
     { btn: modeTunedBtn, mode: "tuned" as VisualizerMode },
     { btn: modeRawBtn, mode: "raw" as VisualizerMode },
@@ -409,7 +440,7 @@ function setupEventListeners() {
     });
   });
 
-  // Source tabs
+  // 音频源切换
   const tabs = [
     { btn: tabPreset, view: viewPreset, type: "preset" as AudioSourceType },
     { btn: tabFile, view: viewFile, type: "file" as AudioSourceType },
@@ -442,11 +473,11 @@ function setupEventListeners() {
     });
   });
 
-  // Play/pause controls
+  // 播放暂停
   playPauseBtn.addEventListener("click", togglePlayPause);
   filePlayPauseBtn.addEventListener("click", togglePlayPause);
 
-  // Audio progress and scrubber synchronization for both preset and local file views
+  // 播放进度与拖动条
   audioElement.addEventListener("timeupdate", () => {
     if (!isNaN(audioElement.duration) && audioElement.duration > 0) {
       const pct = (audioElement.currentTime / audioElement.duration) * 100;
@@ -491,7 +522,7 @@ function setupEventListeners() {
     fileProgressBarWrapper.addEventListener("click", (e) => handleSeek(fileProgressBarWrapper, e));
   }
 
-  // Local audio file dropzone & change button
+  // 文件拖拽与选择
   dropzone.addEventListener("click", () => fileInput.click());
   if (fileChangeBtn) {
     fileChangeBtn.addEventListener("click", () => fileInput.click());
@@ -526,7 +557,7 @@ function setupEventListeners() {
     localFileUrl = URL.createObjectURL(file);
     audioElement.src = localFileUrl;
     localFileTitle.textContent = file.name;
-    localFileDesc.textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB · Local File`;
+    localFileDesc.textContent = `${(file.size / (1024 * 1024)).toFixed(2)} MB · 本地音频`;
     filePlayerRow.style.display = "flex";
     if (fileProgressContainer) {
       fileProgressContainer.style.display = "flex";
@@ -535,7 +566,7 @@ function setupEventListeners() {
     audioElement.play().then(() => updatePlaybackUI(true)).catch(console.error);
   }
 
-  // Microphone toggle
+  // 麦克风按钮
   micToggleBtn.addEventListener("click", () => {
     if (micStream) {
       stopMicrophone();
@@ -544,13 +575,13 @@ function setupEventListeners() {
     }
   });
 
-  // Band count slider & Auto button
+  // 频段数调节与自适应
   sliderBands.addEventListener("input", () => {
     autoWidth = false;
     btnAutoWidth.classList.remove("active");
     bandCount = parseInt(sliderBands.value, 10);
     bandCountVal.textContent = bandCount.toString();
-    hudBands.textContent = `${bandCount} bands`;
+    hudBands.textContent = `${bandCount} 段`;
 
     if (analyzer) {
       analyzer = createSpectrumAnalyzer({
@@ -563,6 +594,7 @@ function setupEventListeners() {
     }
     if (rendererTuned) {
       rendererTuned.setBandCount(bandCount);
+      updateCapsuleProportions(canvasTuned.clientWidth || 400);
     }
   });
 
@@ -574,14 +606,14 @@ function setupEventListeners() {
     }
   });
 
-  // Pause Collapse Simulation
+  // 模拟暂停收缩
   btnTestCollapse.addEventListener("click", () => {
     isSimulatingPause = !isSimulatingPause;
     btnTestCollapse.classList.toggle("active", isSimulatingPause);
-    btnTestCollapse.textContent = isSimulatingPause ? "Resume Dynamic Bounce" : "Simulate Pause";
+    btnTestCollapse.textContent = isSimulatingPause ? "恢复弹簧动效" : "模拟暂停收缩";
   });
 
-  // Reset knobs to defaults
+  // 恢复默认参数
   btnResetKnobs.addEventListener("click", () => {
     reactivity = 1.0;
     noiseGateScale = 1.0;
@@ -610,13 +642,7 @@ function setupEventListeners() {
     }
   });
 
-  // Accordion toggle
-  accordionToggle.addEventListener("click", () => {
-    const isOpen = accordionBody.classList.toggle("open");
-    accordionStatus.textContent = isOpen ? "[-]" : "[+]";
-  });
-
-  // Live DSP & Spring Knobs
+  // 动态旋钮调节
   sliderReactivity.addEventListener("input", () => {
     reactivity = parseFloat(sliderReactivity.value);
     reactivityVal.textContent = `${reactivity.toFixed(2)}x`;
@@ -649,7 +675,7 @@ function setupEventListeners() {
     }
   });
 
-  // Color Swatches
+  // 配色切换
   colorSwatches.forEach((swatch) => {
     swatch.addEventListener("click", () => {
       colorSwatches.forEach((s) => s.classList.remove("active"));
@@ -663,7 +689,7 @@ function setupEventListeners() {
     });
   });
 
-  // Keyboard shortcut (Space = Play/Pause)
+  // 空格快捷键
   window.addEventListener("keydown", (e) => {
     if (e.code === "Space" && e.target === document.body) {
       e.preventDefault();
@@ -671,19 +697,20 @@ function setupEventListeners() {
     }
   });
 
-  // Theme toggle
+  // 主题切换
   themeToggleBtn.addEventListener("click", () => {
     const html = document.documentElement;
     const isDark = html.getAttribute("data-theme") === "dark";
     const nextTheme = isDark ? "light" : "dark";
     html.setAttribute("data-theme", nextTheme);
-    themeToggleBtn.textContent = isDark ? "Dark" : "Light";
+    themeToggleBtn.textContent = isDark ? "深色" : "浅色";
   });
 
-  // Window resize observer
+  // 视窗缩放监听
   window.addEventListener("resize", () => {
     if (rendererTuned) {
       rendererTuned.resize();
+      updateCapsuleProportions(canvasTuned.clientWidth || 400);
     }
     resizeRawCanvas();
     if (autoWidth) {
@@ -692,10 +719,9 @@ function setupEventListeners() {
   });
 }
 
-// --- Entry Point ---
+// --- 入口初始化 ---
 
 function main() {
-  // Pre-load default audio so clicking play immediately works
   audioElement.src = demoTrackUrl;
 
   initAnalyzerAndRenderer();

@@ -1,13 +1,13 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="zh-CN" data-theme="dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>alwave — apple-like-waves spectrum demo</title>
+    <title>alwave — apple-like-waves 频谱演示</title>
     <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
-    <!-- App Header -->
+    <!-- 顶部导航 -->
     <header class="app-header">
       <div class="header-inner">
         <div class="brand">
@@ -16,229 +16,221 @@
           <span class="brand-tag">v1.0.0</span>
         </div>
         <div class="header-actions">
-          <button id="theme-toggle-btn" class="btn-secondary" aria-label="Toggle theme">Light</button>
+          <button id="theme-toggle-btn" class="btn-secondary" aria-label="切换浅色或深色主题">浅色</button>
         </div>
       </div>
     </header>
 
-    <!-- Main Container -->
+    <!-- 主体双栏容器 -->
     <main class="app-container">
-      <!-- Visualizer Stage -->
-      <section class="stage-card">
-        <div class="stage-topbar">
-          <div class="mode-switcher" role="tablist">
-            <button id="mode-tuned" class="mode-btn active" role="tab">Tuned Spectrum</button>
-            <button id="mode-raw" class="mode-btn" role="tab">Raw FFT</button>
-            <button id="mode-compare" class="mode-btn" role="tab">Side by Side</button>
-          </div>
-          <div class="stage-metrics">
-            <div class="metric-pill">
-              <span id="status-dot" class="status-dot"></span>
-              <span id="status-text">Idle</span>
+      <!-- 左栏：频谱视窗与播放控制 -->
+      <div class="column-left">
+        <!-- 频谱视窗卡片 -->
+        <section class="stage-card">
+          <div class="stage-topbar">
+            <div class="mode-switcher" role="tablist">
+              <button id="mode-tuned" class="mode-btn active" role="tab">胶囊频谱</button>
+              <button id="mode-raw" class="mode-btn" role="tab">原始 FFT</button>
+              <button id="mode-compare" class="mode-btn" role="tab">对比模式</button>
             </div>
-            <div class="metric-pill">
-              <span id="hud-bands">6 bands</span>
-            </div>
-            <div class="metric-pill">
-              <span id="hud-fps">0 fps</span>
-            </div>
-            <div class="metric-pill">
-              <span id="hud-rate">48.0 kHz</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Canvas Visualizer Panes -->
-        <div class="visualizer-wrapper" id="visualizer-wrapper">
-          <!-- Tuned Capsule Spectrum Canvas -->
-          <div class="canvas-panel" id="panel-tuned">
-            <div class="canvas-header">
-              <span class="canvas-title">alwave Spectrum</span>
-              <span class="canvas-subtitle">Octave Bins · Attack Boost · Spring Dynamics</span>
-            </div>
-            <div class="canvas-body">
-              <canvas id="canvas-tuned" class="spectrum-canvas"></canvas>
-            </div>
-          </div>
-
-          <!-- Raw FFT Spectrum Canvas -->
-          <div class="canvas-panel" id="panel-raw" style="display: none;">
-            <div class="canvas-header">
-              <span class="canvas-title">Raw FFT</span>
-              <span class="canvas-subtitle">Linear Bins · Uncalibrated</span>
-            </div>
-            <div class="canvas-body">
-              <canvas id="canvas-raw" class="spectrum-canvas"></canvas>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Audio Source Card -->
-      <section class="source-card">
-        <div class="source-tabs">
-          <button id="tab-preset" class="tab-btn active">Demo Track</button>
-          <button id="tab-file" class="tab-btn">Local File</button>
-          <button id="tab-mic" class="tab-btn">Microphone</button>
-        </div>
-
-        <div class="source-content">
-          <!-- Preset Track View -->
-          <div id="view-preset" class="track-player">
-            <div class="player-main-row">
-              <button id="play-pause-btn" class="play-pause-btn" title="Play / Pause (Space)">Play</button>
-              <div class="track-meta">
-                <div class="track-title" id="track-title">AURORA — The Sun (Preview)</div>
-                <div class="track-desc" id="track-desc">128 kbps AAC · 104.6s excerpt</div>
+            <div class="stage-metrics">
+              <div class="metric-pill">
+                <span id="status-dot" class="status-dot"></span>
+                <span id="status-text">就绪</span>
+              </div>
+              <div class="metric-pill">
+                <span id="hud-bands">6 段</span>
+              </div>
+              <div class="metric-pill">
+                <span id="hud-fps">0 fps</span>
+              </div>
+              <div class="metric-pill">
+                <span id="hud-rate">48.0 kHz</span>
               </div>
             </div>
-            <div class="progress-container">
-              <span id="current-time" class="time-label">0:00</span>
-              <div id="progress-bar-wrapper" class="progress-bar-wrapper">
-                <div id="progress-bar-fill" class="progress-bar-fill"></div>
+          </div>
+
+          <!-- 频谱画布区域 -->
+          <div class="visualizer-wrapper" id="visualizer-wrapper">
+            <!-- alwave 调校胶囊频谱 -->
+            <div class="canvas-panel" id="panel-tuned">
+              <div class="canvas-header">
+                <span class="canvas-title">alwave 调校频谱</span>
+                <span class="canvas-subtitle">八度分箱 · 瞬态起音 · 二阶弹簧</span>
               </div>
-              <span id="total-time" class="time-label">1:44</span>
-            </div>
-          </div>
-
-          <!-- Local File Dropzone View -->
-          <div id="view-file" class="track-player" style="display: none;">
-            <div id="dropzone" class="dropzone">
-              <div class="dropzone-title">Drag & drop audio file here, or click to choose</div>
-              <div class="dropzone-hint">MP3, M4A, WAV, FLAC, AAC, OGG</div>
-              <input type="file" id="file-input" accept="audio/*" style="display: none;" />
-            </div>
-            <div id="file-player-row" class="player-main-row" style="display: none; margin-top: 6px;">
-              <button id="file-play-pause-btn" class="play-pause-btn">Play</button>
-              <div class="track-meta">
-                <div class="track-title" id="local-file-title">No file loaded</div>
-                <div class="track-desc" id="local-file-desc">Local audio file</div>
+              <div class="canvas-body">
+                <canvas id="canvas-tuned" class="spectrum-canvas"></canvas>
               </div>
-              <button id="file-change-btn" class="btn-secondary" style="font-size: 12px; padding: 5px 10px;">Change File</button>
             </div>
-            <div id="file-progress-container" class="progress-container" style="display: none;">
-              <span id="file-current-time" class="time-label">0:00</span>
-              <div id="file-progress-bar-wrapper" class="progress-bar-wrapper">
-                <div id="file-progress-bar-fill" class="progress-bar-fill"></div>
+
+            <!-- 原始 FFT 频谱 -->
+            <div class="canvas-panel" id="panel-raw" style="display: none;">
+              <div class="canvas-header">
+                <span class="canvas-title">原始线性 FFT</span>
+                <span class="canvas-subtitle">线性频点 · 未校准</span>
               </div>
-              <span id="file-total-time" class="time-label">0:00</span>
-            </div>
-          </div>
-
-          <!-- Microphone View -->
-          <div id="view-mic" style="display: none;">
-            <div class="mic-view">
-              <div class="mic-info">
-                <div class="mic-info-title">Live Microphone</div>
-                <div class="mic-info-desc">Acoustic feedback muted (no speaker loopback)</div>
+              <div class="canvas-body">
+                <canvas id="canvas-raw" class="spectrum-canvas"></canvas>
               </div>
-              <button id="mic-toggle-btn" class="btn-primary">Enable Mic</button>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      <!-- Controls & Tuning Knobs -->
-      <section class="controls-card">
-        <!-- Quick Controls -->
-        <div class="controls-row">
-          <!-- Band Count Slider -->
-          <div class="control-group">
-            <div class="control-label-row">
-              <span class="control-label">Band Count</span>
-              <span id="band-count-val" class="control-value">6</span>
-            </div>
-            <div class="slider-wrapper">
-              <input type="range" id="slider-bands" min="6" max="36" step="1" value="6" />
-              <button id="btn-auto-width" class="btn-secondary" title="Auto compute band count from container width">
-                Auto
-              </button>
-            </div>
+        <!-- 音频源卡片 -->
+        <section class="source-card">
+          <div class="source-tabs">
+            <button id="tab-preset" class="tab-btn active">预设音频</button>
+            <button id="tab-file" class="tab-btn">本地文件</button>
+            <button id="tab-mic" class="tab-btn">麦克风</button>
           </div>
 
-          <!-- Pause Dynamics Collapse Tester -->
-          <div class="control-group">
-            <div class="control-label-row">
-              <span class="control-label">Pause Test</span>
-              <span class="control-value">Critically Damped</span>
+          <div class="source-content">
+            <!-- 预设音频视图 -->
+            <div id="view-preset" class="track-player">
+              <div class="player-main-row">
+                <button id="play-pause-btn" class="play-pause-btn" title="播放 / 暂停 (空格键)">播放</button>
+                <div class="track-meta">
+                  <div class="track-title" id="track-title">AURORA — The Sun (片段)</div>
+                  <div class="track-desc" id="track-desc">128 kbps AAC · 104.6 秒</div>
+                </div>
+              </div>
+              <div class="progress-container">
+                <span id="current-time" class="time-label">0:00</span>
+                <div id="progress-bar-wrapper" class="progress-bar-wrapper">
+                  <div id="progress-bar-fill" class="progress-bar-fill"></div>
+                </div>
+                <span id="total-time" class="time-label">1:44</span>
+              </div>
             </div>
-            <div style="display: flex; gap: 8px;">
-              <button id="btn-test-collapse" class="btn-secondary" style="flex: 1;">
-                Simulate Pause
-              </button>
-              <button id="btn-reset-knobs" class="btn-secondary" title="Reset all tuning knobs to defaults">
-                Reset
-              </button>
+
+            <!-- 本地文件视图 -->
+            <div id="view-file" class="track-player" style="display: none;">
+              <div id="dropzone" class="dropzone">
+                <div class="dropzone-title">点击或拖拽音频文件到此处</div>
+                <div class="dropzone-hint">支持 MP3、M4A、WAV、FLAC、AAC、OGG</div>
+                <input type="file" id="file-input" accept="audio/*" style="display: none;" />
+              </div>
+              <div id="file-player-row" class="player-main-row" style="display: none; margin-top: 4px;">
+                <button id="file-play-pause-btn" class="play-pause-btn">播放</button>
+                <div class="track-meta">
+                  <div class="track-title" id="local-file-title">未载入文件</div>
+                  <div class="track-desc" id="local-file-desc">本地音频</div>
+                </div>
+                <button id="file-change-btn" class="btn-secondary">更换文件</button>
+              </div>
+              <div id="file-progress-container" class="progress-container" style="display: none;">
+                <span id="file-current-time" class="time-label">0:00</span>
+                <div id="file-progress-bar-wrapper" class="progress-bar-wrapper">
+                  <div id="file-progress-bar-fill" class="progress-bar-fill"></div>
+                </div>
+                <span id="file-total-time" class="time-label">0:00</span>
+              </div>
+            </div>
+
+            <!-- 麦克风视图 -->
+            <div id="view-mic" style="display: none;">
+              <div class="mic-view">
+                <div class="mic-info">
+                  <div class="mic-info-title">实时麦克风采集</div>
+                  <div class="mic-info-desc">时域直采（已静音扬声器防啸叫）</div>
+                </div>
+                <button id="mic-toggle-btn" class="btn-primary">开启麦克风</button>
+              </div>
             </div>
           </div>
-        </div>
+        </section>
+      </div>
 
-        <!-- Collapsible Tuning Knobs Accordion -->
-        <div class="accordion-header" id="accordion-toggle">
-          <span class="accordion-title">DSP & Physics Parameters</span>
-          <span class="accordion-status" id="accordion-status">[+]</span>
-        </div>
+      <!-- 右栏：常驻参数控制面板 -->
+      <div class="column-right">
+        <section class="controls-card">
+          <div class="card-header">
+            <span class="card-title">参数调节</span>
+          </div>
 
-        <div class="accordion-body" id="accordion-body">
-          <div class="controls-row">
-            <!-- Reactivity Knob -->
+          <div class="controls-grid">
+            <!-- 频段数 -->
             <div class="control-group">
               <div class="control-label-row">
-                <span class="control-label">Reactivity (Punch)</span>
+                <span class="control-label">频段数</span>
+                <span id="band-count-val" class="control-value">6</span>
+              </div>
+              <div class="slider-wrapper">
+                <input type="range" id="slider-bands" min="6" max="36" step="1" value="6" />
+                <button id="btn-auto-width" class="btn-secondary" title="根据容器宽度自适应频段数">
+                  自适应
+                </button>
+              </div>
+            </div>
+
+            <!-- 响应度 -->
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">响应度 (起音冲力)</span>
                 <span id="reactivity-val" class="control-value">1.00x</span>
               </div>
               <input type="range" id="slider-reactivity" min="0.2" max="2.5" step="0.05" value="1.0" />
             </div>
 
-            <!-- Noise Gate Scale Knob -->
+            <!-- 噪声门限 -->
             <div class="control-group">
               <div class="control-label-row">
-                <span class="control-label">Noise Gate Scale</span>
+                <span class="control-label">噪声门限</span>
                 <span id="noisegate-val" class="control-value">1.00x</span>
               </div>
               <input type="range" id="slider-noisegate" min="0.0" max="3.0" step="0.05" value="1.0" />
             </div>
 
-            <!-- Spring Settle Duration Knob -->
+            <!-- 弹簧时长 -->
             <div class="control-group">
               <div class="control-label-row">
-                <span class="control-label">Spring Settle Duration</span>
+                <span class="control-label">弹簧时长</span>
                 <span id="spring-duration-val" class="control-value">0.325 s</span>
               </div>
               <input type="range" id="slider-spring-duration" min="0.10" max="0.80" step="0.025" value="0.325" />
             </div>
 
-            <!-- Spring Damping Ratio Knob -->
+            <!-- 阻尼比 -->
             <div class="control-group">
               <div class="control-label-row">
-                <span class="control-label">Spring Damping (ζ)</span>
+                <span class="control-label">阻尼比 (ζ)</span>
                 <span id="spring-damping-val" class="control-value">0.83</span>
               </div>
               <input type="range" id="slider-spring-damping" min="0.20" max="1.50" step="0.02" value="0.83" />
             </div>
 
-            <!-- Capsule Color Theme Palette -->
+            <!-- 胶囊配色 -->
             <div class="control-group">
               <div class="control-label-row">
-                <span class="control-label">Capsule Palette</span>
+                <span class="control-label">胶囊配色</span>
               </div>
               <div class="color-palette">
-                <div class="color-swatch active" data-color="#e6c450" style="background-color: #e6c450;" title="Cover Sun Gold"></div>
-                <div class="color-swatch" data-color="#ffffff" style="background-color: #ffffff;" title="Monochrome"></div>
-                <div class="color-swatch" data-color="#38bdf8" style="background-color: #38bdf8;" title="Sky"></div>
-                <div class="color-swatch" data-color="#34d399" style="background-color: #34d399;" title="Emerald"></div>
-                <div class="color-swatch" data-color="#a78bfa" style="background-color: #a78bfa;" title="Violet"></div>
+                <div class="color-swatch active" data-color="#e6c450" style="background-color: #e6c450;" title="封面暖金"></div>
+                <div class="color-swatch" data-color="#ffffff" style="background-color: #ffffff;" title="纯白"></div>
+                <div class="color-swatch" data-color="#38bdf8" style="background-color: #38bdf8;" title="天蓝"></div>
+                <div class="color-swatch" data-color="#34d399" style="background-color: #34d399;" title="翡翠"></div>
+                <div class="color-swatch" data-color="#a78bfa" style="background-color: #a78bfa;" title="紫罗兰"></div>
               </div>
             </div>
+
+            <!-- 操作按钮行 -->
+            <div class="actions-row">
+              <button id="btn-test-collapse" class="btn-secondary" style="flex: 1;">
+                模拟暂停收缩
+              </button>
+              <button id="btn-reset-knobs" class="btn-secondary">
+                恢复默认
+              </button>
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </main>
 
-    <!-- Footer -->
+    <!-- 底部版权与链接 -->
     <footer class="app-footer">
       <div class="footer-inner">
-        <span>apple-like-waves (alwave) — Calibrated Audio Spectrum</span>
+        <span>apple-like-waves (alwave) — 跨平台音频胶囊频谱库</span>
         <div class="footer-links">
           <a href="https://github.com/kmgcc/apple-like-waves" target="_blank" rel="noopener noreferrer" class="footer-link">GitHub</a>
           <span>MIT License 2026</span>
@@ -246,7 +238,7 @@
       </div>
     </footer>
 
-    <!-- Native audio element -->
+    <!-- 原生音频元素 -->
     <audio id="audio-element" preload="auto" crossorigin="anonymous"></audio>
 
     <script type="module" src="/src/main.ts"></script>
