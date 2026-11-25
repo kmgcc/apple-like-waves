@@ -415,6 +415,8 @@ body {
   padding: 6px 14px;
   border-radius: var(--radius-md);
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: opacity 0.15s ease;
 }
 
@@ -430,6 +432,8 @@ body {
   padding: 6px 12px;
   border-radius: var(--radius-md);
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: background-color 0.15s ease;
 }
 
