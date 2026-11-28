@@ -1,35 +1,35 @@
 # apple-like-waves
 
-[English](README.md) · [中文](README.zh-CN.md)
+[中文](README.md) · [English](README.en.md)
 
-An audio spectrum visualizer inspired by Apple's system animations, available for Swift and the web.
+参考 Apple 系统动画效果制作的音频频谱可视化组件，支持 Swift 与 Web。
 
-![Apple vs alwave comparison](docs/assets/comparison.gif)
+![Apple 与 alwave 频谱对比](docs/assets/comparison.gif)
 
-[Live Demo](https://kmgcc.github.io/apple-like-waves/)
+[在线演示](https://kmgcc.github.io/apple-like-waves/)
 
-apple-like-waves (alwave) converts real-time audio into animated capsule bars with smooth spring physics. It is designed for music players, voice recorders, and interactive audio interfaces.
+apple-like-waves (alwave) 将实时音频转换为带弹簧物理动效的胶囊柱，适用于音乐播放器、录音工具与交互式音频界面。
 
-## Features
+## 特性
 
-- Capsule bar motion inspired by Apple's system audio spectrum
-- Supports 6 to 36 frequency bands, with `recommendedBandCount` for width-based layout
-- Responsive to beats and volume changes
-- Smooth spring animation and collapse transition on pause
-- Customizable colors, bar width, spacing, and sensitivity
-- Supports SwiftUI (`CapsuleSpectrumView`), AppKit (`CapsuleSpectrumHostView` backed by `CALayer`), and HTML Canvas (`AlwaveCanvasRenderer`)
+- 参考 Apple 系统音频频谱制作的胶囊柱动效
+- 支持 6 至 36 根频段胶囊，并提供基于宽度的 `recommendedBandCount` 自动分段计算
+- 响应节奏强弱与音量变化
+- 暂停时提供平滑的弹簧回弹与收缩过渡
+- 支持自定义配色、胶囊宽度、间距与灵敏度
+- 支持 SwiftUI (`CapsuleSpectrumView`)、AppKit (`CapsuleSpectrumHostView`，基于 `CALayer`) 与 HTML Canvas (`AlwaveCanvasRenderer`)
 
-## Live Demo
+## 在线演示
 
-A web demo featuring a built-in track, local audio file upload, microphone input, and live parameter controls is available online:
+在线 Web 演示包含内置示例音频、本地音频拖拽上传、麦克风实时输入以及调节控件：
 
-[Try the demo](https://kmgcc.github.io/apple-like-waves/)
+[打开在线演示](https://kmgcc.github.io/apple-like-waves/)
 
-## Getting Started
+## 使用说明
 
 ### Swift
 
-Requires iOS 16+ or macOS 14+. Add apple-like-waves to your `Package.swift`:
+支持 iOS 16+ 与 macOS 14+。在 `Package.swift` 中添加依赖：
 
 ```swift
 dependencies: [
@@ -37,7 +37,7 @@ dependencies: [
 ]
 ```
 
-Add the `Alwave` library product to your target:
+并在 Target 中引入 `Alwave`：
 
 ```swift
 .target(
@@ -48,29 +48,29 @@ Add the `Alwave` library product to your target:
 )
 ```
 
-Process audio and drive the visualizer:
+音频分析与步进调用：
 
 ```swift
 import SpectrumCore
 import SpectrumUI
 
-// Initialize the analyzer
+// 初始化分析器
 let analyzer = SpectrumAnalyzer(bandCount: 6, sampleRate: 48000)
 
-// In your audio tap or callback:
+// 在音频输入回调中推入 PCM 采样：
 analyzer.pushSamples(pcm: pcmBuffer)
 
-// On frame updates (e.g. CADisplayLink), step forward to get normalized [0, 1] heights:
+// 屏幕刷新回调（如 CADisplayLink）中推进时间步，获取 [0, 1] 归一化高度：
 let targets = analyzer.step(dt: 1.0 / 60.0)
 ```
 
-Render with SwiftUI:
+使用 SwiftUI 渲染：
 
 ```swift
 CapsuleSpectrumView(values: targets)
 ```
 
-Render with AppKit (`NSView`):
+使用 AppKit (`NSView`) 渲染：
 
 ```swift
 let hostView = CapsuleSpectrumHostView(capsuleCount: 6)
@@ -78,7 +78,7 @@ hostView.update(values: targets)
 hostView.isPaused = false
 ```
 
-Calculate recommended band count from view width:
+根据视图宽度计算建议频段数：
 
 ```swift
 let bandCount = SpectrumAnalyzer.recommendedBandCount(width: view.bounds.width)
@@ -86,7 +86,7 @@ let bandCount = SpectrumAnalyzer.recommendedBandCount(width: view.bounds.width)
 
 ### Web
 
-The web packages (`@alwave/core` and `@alwave/canvas`) are located in the `web/` workspace of this repository. Clone and build the packages locally:
+Web 依赖包（`@alwave/core` 与 `@alwave/canvas`）位于本仓库的 `web/` 工作区。如需在项目中使用，可克隆并在本地构建：
 
 ```bash
 git clone https://github.com/kmgcc/apple-like-waves.git
@@ -95,19 +95,19 @@ pnpm install
 pnpm build
 ```
 
-Then import from the packages in your project:
+在前端项目中引入对应包：
 
 ```typescript
 import { createSpectrumAnalyzer, recommendedBandCount } from "@alwave/core";
 import { AlwaveCanvasRenderer } from "@alwave/canvas";
 
-// Create analyzer instance
+// 初始化分析器
 const analyzer = createSpectrumAnalyzer({
   bandCount: 6,
   sampleRate: 48000
 });
 
-// Attach Canvas renderer
+// 绑定 Canvas 渲染器
 const canvas = document.getElementById("visualizer") as HTMLCanvasElement;
 const renderer = new AlwaveCanvasRenderer(canvas, { bandCount: 6 });
 
@@ -126,26 +126,26 @@ function render() {
 requestAnimationFrame(render);
 ```
 
-## Customization
+## 调节参数
 
-| Parameter | Type | Default | Description |
+| 参数 | 类型 | 默认值 | 说明 |
 |---|---|---|---|
-| `bandCount` | `Int` / `number` | `6` | Number of frequency bands (6–36) |
-| `sampleRate` | `Double` / `number` | `48000` | Input PCM sample rate in Hz |
-| `reactivity` | `Double` / `number` | `1.0` | Attack boost multiplier for transients |
-| `noiseGateScale` | `Double` / `number` | `1.0` | Noise gate threshold scaling |
-| `capsuleWidth` | `CGFloat` / `number` | `4.0` | Default capsule width in points or pixels |
-| `capsuleSpacing` | `CGFloat` / `number` | `3.0` | Spacing between adjacent capsules |
-| `barColor` / `color` | `Color` / `string` | `.white` / `"#E6C450"` | Fill color of the capsules |
-| `springDuration` | `Double` / `number` | `0.325` | Characteristic settling duration in seconds |
-| `springDamping` | `Double` / `number` | `0.83` | Damping ratio $\zeta$ (~0.9% overshoot) |
+| `bandCount` | `Int` / `number` | `6` | 频段数量（支持 6–36） |
+| `sampleRate` | `Double` / `number` | `48000` | 输入 PCM 采样率（Hz） |
+| `reactivity` | `Double` / `number` | `1.0` | 瞬态起音加成倍率 |
+| `noiseGateScale` | `Double` / `number` | `1.0` | 噪声门限敏感度系数 |
+| `capsuleWidth` | `CGFloat` / `number` | `4.0` | 胶囊基础宽度（点或像素） |
+| `capsuleSpacing` | `CGFloat` / `number` | `3.0` | 相邻胶囊间距 |
+| `barColor` / `color` | `Color` / `string` | `.white` / `"#E6C450"` | 胶囊填充颜色 |
+| `springDuration` | `Double` / `number` | `0.325` | 弹簧特征收敛时长（秒） |
+| `springDamping` | `Double` / `number` | `0.83` | 阻尼比 $\zeta$（约 0.9% 过冲） |
 
-## How It Works
+## 运行原理
 
-The analyzer computes a 2048-point Hann-windowed FFT on incoming PCM audio and maps frequency bins into logarithmic octave bands. Each band energy is calibrated and passed through a transient boost stage that uses the 3 most recent analysis steps and a slow-tracking volume gate to emphasize rhythm. A second-order damped harmonic spring model drives the capsule heights and widths smoothly across frame rate changes.
+分析器对输入的 PCM 样本执行 2048 点 Hann 窗加窗实数快速傅里叶变换，并将频谱映射至对数八度频段。各频段能量经过标定，并结合最近 3 步分析帧的历史加权均值与慢跟随音量门限进行瞬态起音加成。显示层采用受阻尼二阶谐振子物理模型驱动胶囊高度与宽度，在帧率变动时保持平滑过渡。
 
-Swift and Web implementations share the same algorithm and default parameters ([spec/default-tuning.json](spec/default-tuning.json)). For mathematical derivations and parameters, see [docs/ALGORITHM.md](docs/ALGORITHM.md).
+Swift 与 Web 实现共享相同的计算逻辑与默认参数（[spec/default-tuning.json](spec/default-tuning.json)）。数学推导与参数细节详见 [docs/ALGORITHM.md](docs/ALGORITHM.md)。
 
-## License
+## 许可证
 
-Released under the [MIT License](LICENSE).
+本项目基于 [MIT 许可证](LICENSE) 发布。
