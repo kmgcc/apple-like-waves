@@ -167,9 +167,17 @@ body {
   background-color: #10b981;
 }
 
+.status-dot.loading {
+  background-color: #f59e0b;
+}
+
+.status-dot.error {
+  background-color: #ef4444;
+}
+
 /* Visualizer Panes */
 .visualizer-wrapper {
-  min-height: 180px;
+  min-height: 144px;
   width: 100%;
   display: flex;
 }
@@ -188,7 +196,7 @@ body {
   flex: 1;
   position: relative;
   width: 100%;
-  height: 180px;
+  height: 144px;
 }
 
 .spectrum-canvas {
@@ -270,6 +278,12 @@ body {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.track-status {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
 }
 
 .track-desc {

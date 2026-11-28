@@ -24,6 +24,9 @@ let pauseDamping = 1.0;
 let capsuleColor = "#e6c450"; // 默认封面暖金配色
 let isSimulatingPause = false;
 let localFileUrl: string | null = null;
+let isAudioLoading = false;
+let isPendingPlay = false;
+let hasLoadError = false;
 
 // 音频链路引用
 let audioCtx: AudioContext | null = null;
@@ -61,6 +64,7 @@ const viewMic = document.getElementById("view-mic") as HTMLElement;
 
 // 预设音频播放器组件
 const playPauseBtn = document.getElementById("play-pause-btn") as HTMLButtonElement;
+const trackStatus = document.getElementById("track-status") as HTMLElement;
 const currentTimeLabel = document.getElementById("current-time") as HTMLElement;
 const totalTimeLabel = document.getElementById("total-time") as HTMLElement;
 const progressBarWrapper = document.getElementById("progress-bar-wrapper") as HTMLElement;
@@ -73,6 +77,7 @@ const filePlayerRow = document.getElementById("file-player-row") as HTMLElement;
 const filePlayPauseBtn = document.getElementById("file-play-pause-btn") as HTMLButtonElement;
 const fileChangeBtn = document.getElementById("file-change-btn") as HTMLButtonElement;
 const localFileTitle = document.getElementById("local-file-title") as HTMLElement;
+const fileStatus = document.getElementById("file-status") as HTMLElement;
 const fileProgressContainer = document.getElementById("file-progress-container") as HTMLElement;
 const fileCurrentTime = document.getElementById("file-current-time") as HTMLElement;
 const fileTotalTime = document.getElementById("file-total-time") as HTMLElement;
@@ -113,12 +118,12 @@ function formatTime(seconds: number): string {
 function updateCapsuleProportions(canvasWidth?: number, canvasHeight?: number) {
   if (!rendererTuned) return;
   const w = canvasWidth || canvasTuned.clientWidth || 400;
-  const h = canvasHeight || canvasTuned.clientHeight || 180;
-  const maxClusterW = Math.min(w * 0.76, bandCount * 18);
+  const h = canvasHeight || canvasTuned.clientHeight || 144;
+  const maxClusterW = Math.min(w * 0.56, bandCount * 11.0);
   const pitch = maxClusterW / bandCount;
-  rendererTuned.capsuleWidth = Math.max(3.0, Math.min(9.5, pitch * 0.54));
-  rendererTuned.capsuleSpacing = Math.max(2.0, Math.min(8.0, pitch * 0.46));
-  rendererTuned.maxHeightRatio = Math.min(0.64, 112 / Math.max(1, h));
+  rendererTuned.capsuleWidth = Math.max(2.2, Math.min(6.0, pitch * 0.54));
+  rendererTuned.capsuleSpacing = Math.max(1.5, Math.min(5.0, pitch * 0.46));
+  rendererTuned.maxHeightRatio = Math.min(0.50, 68 / Math.max(1, h));
 }
 
 function ensureAudioPipeline(): WebAudioBridge {
@@ -169,7 +174,7 @@ function initAnalyzerAndRenderer() {
     noiseGateScale,
   });
 
-  const h = canvasTuned.clientHeight || 180;
+  const h = canvasTuned.clientHeight || 144;
   rendererTuned = new AlwaveCanvasRenderer(canvasTuned, {
     bandCount,
     color: capsuleColor,
@@ -177,7 +182,7 @@ function initAnalyzerAndRenderer() {
     springDamping,
     pauseDuration,
     pauseDamping,
-    maxHeightRatio: Math.min(0.64, 112 / Math.max(1, h)),
+    maxHeightRatio: Math.min(0.50, 68 / Math.max(1, h)),
   });
 
   const w = canvasTuned.clientWidth || 400;
@@ -235,17 +240,71 @@ function isAudioActive(): boolean {
   return !audioElement.paused && !audioElement.ended;
 }
 
-function updatePlaybackUI(playing: boolean) {
+function updatePlaybackUI(customPlaying?: boolean) {
+  if (currentSource === "mic") {
+    const isMicActive = customPlaying !== undefined ? customPlaying : (micStream !== null);
+    playPauseBtn.textContent = "播放";
+    filePlayPauseBtn.textContent = "播放";
+    statusDot.className = "status-dot" + (isMicActive ? " active" : "");
+    statusText.textContent = isMicActive ? "麦克风采集" : "就绪";
+    if (trackStatus) trackStatus.style.display = "none";
+    if (fileStatus) fileStatus.style.display = "none";
+    return;
+  }
+
+  const activeStatusEl = currentSource === "preset" ? trackStatus : fileStatus;
+  const otherStatusEl = currentSource === "preset" ? fileStatus : trackStatus;
+  if (otherStatusEl) otherStatusEl.style.display = "none";
+
+  if (hasLoadError) {
+    playPauseBtn.textContent = "点击重试";
+    filePlayPauseBtn.textContent = "点击重试";
+    statusDot.className = "status-dot error";
+    statusText.textContent = "加载失败";
+    if (activeStatusEl) {
+      activeStatusEl.textContent = "音频加载失败，请检查网络或点击重试";
+      activeStatusEl.style.display = "block";
+    }
+    return;
+  }
+
+  if (isPendingPlay) {
+    playPauseBtn.textContent = "正在加载...";
+    filePlayPauseBtn.textContent = "正在加载...";
+    statusDot.className = "status-dot loading";
+    statusText.textContent = "正在加载...";
+    if (activeStatusEl) {
+      activeStatusEl.textContent = "正在缓冲音频...";
+      activeStatusEl.style.display = "block";
+    }
+    return;
+  }
+
+  if (isAudioLoading && !isAudioActive()) {
+    playPauseBtn.textContent = "播放";
+    filePlayPauseBtn.textContent = "播放";
+    statusDot.className = "status-dot loading";
+    statusText.textContent = "正在加载...";
+    if (activeStatusEl) {
+      activeStatusEl.textContent = "正在预载音频...";
+      activeStatusEl.style.display = "block";
+    }
+    return;
+  }
+
+  const playing = customPlaying !== undefined ? customPlaying : isAudioActive();
   if (playing) {
     playPauseBtn.textContent = "暂停";
     filePlayPauseBtn.textContent = "暂停";
-    statusDot.classList.add("active");
-    statusText.textContent = currentSource === "mic" ? "麦克风采集" : "播放中";
+    statusDot.className = "status-dot active";
+    statusText.textContent = "播放中";
+    if (activeStatusEl) activeStatusEl.style.display = "none";
   } else {
     playPauseBtn.textContent = "播放";
     filePlayPauseBtn.textContent = "播放";
-    statusDot.classList.remove("active");
+    statusDot.className = "status-dot";
     statusText.textContent = "就绪";
+    if (activeStatusEl) activeStatusEl.style.display = "none";
   }
 }
 
@@ -298,14 +357,51 @@ function togglePlayPause() {
     return;
   }
 
+  if (hasLoadError) {
+    hasLoadError = false;
+    isAudioLoading = true;
+    isPendingPlay = true;
+    updatePlaybackUI();
+    audioElement.load();
+    audioElement.play().then(() => {
+      isPendingPlay = false;
+      hasLoadError = false;
+      updatePlaybackUI(true);
+    }).catch((err) => {
+      console.error("重试播放失败:", err);
+      hasLoadError = true;
+      isPendingPlay = false;
+      updatePlaybackUI();
+    });
+    return;
+  }
+
+  if (isPendingPlay) {
+    return;
+  }
+
   if (!audioElement.src || audioElement.src === "" || audioElement.src.endsWith("/")) {
-    audioElement.src = demoTrackUrl;
+    audioElement.src = currentSource === "file" && localFileUrl ? localFileUrl : demoTrackUrl;
   }
 
   if (audioElement.paused) {
-    audioElement.play().then(() => updatePlaybackUI(true)).catch(console.error);
+    isPendingPlay = true;
+    updatePlaybackUI();
+    audioElement.play().then(() => {
+      isPendingPlay = false;
+      hasLoadError = false;
+      updatePlaybackUI(true);
+    }).catch((err) => {
+      console.error("播放失败:", err);
+      isPendingPlay = false;
+      if (err.name !== "AbortError") {
+        hasLoadError = true;
+      }
+      updatePlaybackUI();
+    });
   } else {
     audioElement.pause();
+    isPendingPlay = false;
     updatePlaybackUI(false);
   }
 }
@@ -380,6 +476,57 @@ function setupEventListeners() {
   // 播放暂停
   playPauseBtn.addEventListener("click", togglePlayPause);
   filePlayPauseBtn.addEventListener("click", togglePlayPause);
+
+  // 音频缓冲与加载状态事件
+  audioElement.addEventListener("loadstart", () => {
+    isAudioLoading = true;
+    hasLoadError = false;
+    updatePlaybackUI();
+  });
+
+  audioElement.addEventListener("waiting", () => {
+    isAudioLoading = true;
+    updatePlaybackUI();
+  });
+
+  audioElement.addEventListener("stalled", () => {
+    isAudioLoading = true;
+    updatePlaybackUI();
+  });
+
+  audioElement.addEventListener("canplay", () => {
+    isAudioLoading = false;
+    updatePlaybackUI();
+  });
+
+  audioElement.addEventListener("canplaythrough", () => {
+    isAudioLoading = false;
+    updatePlaybackUI();
+  });
+
+  audioElement.addEventListener("playing", () => {
+    isAudioLoading = false;
+    isPendingPlay = false;
+    hasLoadError = false;
+    updatePlaybackUI(true);
+  });
+
+  audioElement.addEventListener("pause", () => {
+    isPendingPlay = false;
+    updatePlaybackUI(false);
+  });
+
+  audioElement.addEventListener("ended", () => {
+    isPendingPlay = false;
+    updatePlaybackUI(false);
+  });
+
+  audioElement.addEventListener("error", () => {
+    isAudioLoading = false;
+    isPendingPlay = false;
+    hasLoadError = true;
+    updatePlaybackUI();
+  });
 
   // 播放进度与拖动条
   audioElement.addEventListener("timeupdate", () => {
@@ -459,6 +606,9 @@ function setupEventListeners() {
   function handleAudioFile(file: File) {
     ensureAudioPipeline();
     localFileUrl = URL.createObjectURL(file);
+    hasLoadError = false;
+    isAudioLoading = true;
+    isPendingPlay = true;
     audioElement.src = localFileUrl;
     localFileTitle.textContent = file.name;
     filePlayerRow.style.display = "flex";
@@ -466,7 +616,19 @@ function setupEventListeners() {
       fileProgressContainer.style.display = "flex";
     }
     dropzone.style.display = "none";
-    audioElement.play().then(() => updatePlaybackUI(true)).catch(console.error);
+    updatePlaybackUI();
+    audioElement.play().then(() => {
+      isPendingPlay = false;
+      hasLoadError = false;
+      updatePlaybackUI(true);
+    }).catch((err) => {
+      console.error("本地音频播放失败:", err);
+      isPendingPlay = false;
+      if (err.name !== "AbortError") {
+        hasLoadError = true;
+      }
+      updatePlaybackUI();
+    });
   }
 
   // 麦克风按钮
@@ -629,6 +791,7 @@ function main() {
   initAnalyzerAndRenderer();
   setupEventListeners();
   updateVisualizerLayout();
+  updatePlaybackUI();
   requestAnimationFrame(animationLoop);
 }
 

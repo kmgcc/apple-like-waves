@@ -6,7 +6,7 @@
 
 ## 1. 信号处理流程
 
-alwave 将实时输入的单声道脉冲编码调制（PCM）音频信号转换为平滑、具备动态呼吸感的胶囊频谱：
+alwave 将实时输入的单声道脉冲编码调制（PCM）音频信号转换为平滑且响应迅速的胶囊频谱：
 
 ```
 音频 PCM 采样 (48 kHz)
@@ -92,8 +92,8 @@ $$v_i = \text{clamp}\left( (A_i \cdot g_i)^{e_i}, 0.0, 1.0 \right)$$
 
 为凸显节奏打击乐的瞬态冲击力，同时避免大音量段落视觉过度饱和，系统引入动态起音增强。
 
-### 5.1 三拍参考包络
-使用延时加权均值跟踪近期背景电平：
+### 5.1 三步历史参考包络
+使用最近 3 步分析帧的历史加权均值（$v[t], v[t-1], v[t-2]$）跟踪背景电平：
 $$v_{\text{ref}}[t] = 0.50 \cdot v[t] + 0.30 \cdot v[t-1] + 0.20 \cdot v[t-2]$$
 $$\Delta v_{\text{rise}} = \max(0.0, v[t] - v_{\text{ref}}[t])$$
 
@@ -134,3 +134,9 @@ $$\ddot{x} + 2\zeta\omega_n \dot{x} + \omega_n^2 (x - x_{\text{target}}) = 0$$
   $$w = w_{\text{base}} \cdot (1.0 + 0.145 \cdot H_{\text{display}})$$
 
 绘制过程基于浮点矢量路径与抗锯齿处理，避免整像素吸附引起的视觉跳变。
+
+---
+
+## 8. 跨端数值验证与黄金测试向量
+
+在合成信号测试套件（`spec/golden-vectors/` 与 `web/tests/golden-vectors.test.ts`）中，针对对数扫频（chirp）、周期脉冲与粉红噪声分别运行 6 段与 36 段分析，Web 端（TypeScript 实数 FFT）对比 Swift 端（Accelerate vDSP）的逐帧输出最大绝对误差均低于 $10^{-5}$。
