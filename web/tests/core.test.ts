@@ -92,6 +92,46 @@ describe("RealFFT", () => {
   });
 });
 
+describe("SpectrumAnalyzer inputGain", () => {
+  it("scales input level correctly across 0.0, 1.0, and 2.0", () => {
+    const sampleRate = 48000;
+    const freq = 1000;
+    const sine = new Float32Array(2048);
+    for (let i = 0; i < 2048; i++) {
+      sine[i] = 0.008 * Math.sin((2.0 * Math.PI * freq * i) / sampleRate);
+    }
+
+    // Zero gain
+    const zeroAnalyzer = createSpectrumAnalyzer({ bandCount: 6, sampleRate, inputGain: 0.0 });
+    zeroAnalyzer.pushSamples(sine);
+    const zeroOut = zeroAnalyzer.step(1 / 60);
+    for (const v of zeroOut) {
+      expect(v).toBe(0.0);
+    }
+
+    // Baseline gain (1.0)
+    const baseAnalyzer = createSpectrumAnalyzer({ bandCount: 6, sampleRate, inputGain: 1.0 });
+    baseAnalyzer.pushSamples(sine);
+    const baseOut = baseAnalyzer.step(1 / 60);
+    const baseMax = Math.max(...baseOut);
+    expect(baseMax).toBeGreaterThan(0.0);
+
+    // Boosted gain (2.0)
+    const boostAnalyzer = createSpectrumAnalyzer({ bandCount: 6, sampleRate, inputGain: 2.0 });
+    boostAnalyzer.pushSamples(sine);
+    const boostOut = boostAnalyzer.step(1 / 60);
+    const boostMax = Math.max(...boostOut);
+    expect(boostMax).toBeGreaterThan(baseMax);
+
+    // Dynamic property modification
+    baseAnalyzer.inputGain = 0.0;
+    expect(baseAnalyzer.inputGain).toBe(0.0);
+    const mutedOut = baseAnalyzer.step(1 / 60);
+    // Since envelope decays smoothly towards 0
+    expect(Math.max(...mutedOut)).toBeLessThan(baseMax);
+  });
+});
+
 describe("recommendedBandCount", () => {
   it("calculates layout bands based on width", () => {
     expect(recommendedBandCount(100)).toBe(6);

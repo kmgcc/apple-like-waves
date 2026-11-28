@@ -141,6 +141,15 @@
               </div>
             </div>
 
+            <!-- 输入增益 -->
+            <div class="control-group">
+              <div class="control-label-row">
+                <span class="control-label">输入增益</span>
+                <span id="input-gain-val" class="control-value">1.00x</span>
+              </div>
+              <input type="range" id="slider-input-gain" min="0.20" max="3.00" step="0.05" value="1.00" />
+            </div>
+
             <!-- 响应度 -->
             <div class="control-group">
               <div class="control-label-row">
@@ -183,7 +192,8 @@
                 <span class="control-label">胶囊配色</span>
               </div>
               <div class="color-palette">
-                <div class="color-swatch active" data-color="#e6c450" style="background-color: #e6c450;" title="封面暖金"></div>
+                <button type="button" class="btn-swatch-artwork active" id="swatch-artwork" title="专辑封面渐变">封面</button>
+                <div class="color-swatch" data-color="#e6c450" style="background-color: #e6c450;" title="封面暖金"></div>
                 <div class="color-swatch" data-color="#ffffff" style="background-color: #ffffff;" title="纯白"></div>
                 <div class="color-swatch" data-color="#38bdf8" style="background-color: #38bdf8;" title="天蓝"></div>
                 <div class="color-swatch" data-color="#34d399" style="background-color: #34d399;" title="翡翠"></div>

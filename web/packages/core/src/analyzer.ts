@@ -10,6 +10,7 @@ export interface SpectrumAnalyzerOptions {
   tuningProfile?: TuningProfile;
   reactivity?: number;
   noiseGateScale?: number;
+  inputGain?: number;
 }
 
 /**
@@ -22,6 +23,7 @@ export class SpectrumAnalyzer {
 
   public reactivity: number;
   public noiseGateScale: number;
+  public inputGain: number;
   public tuningProfile: TuningProfile;
 
   private readonly ringBuffer: RingBuffer;
@@ -41,6 +43,7 @@ export class SpectrumAnalyzer {
     this.tuningProfile = tuningProfile;
     this.reactivity = Math.max(0.0, options.reactivity ?? 1.0);
     this.noiseGateScale = Math.max(0.0, options.noiseGateScale ?? 1.0);
+    this.inputGain = Math.max(0.0, options.inputGain ?? 1.0);
 
     this.ringBuffer = new RingBuffer(2048);
     this.fft = new RealFFT(2048);
@@ -112,6 +115,13 @@ export class SpectrumAnalyzer {
         } else {
           acc[i] = (rows[i] * weights[i]) / scale * this.tuningProfile.subBandTrim;
         }
+      }
+    }
+
+    if (this.inputGain !== 1.0) {
+      const g = Math.max(0.0, this.inputGain);
+      for (let i = 0; i < acc.length; i++) {
+        acc[i] *= g;
       }
     }
 

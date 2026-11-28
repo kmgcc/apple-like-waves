@@ -110,6 +110,8 @@ const analyzer = createSpectrumAnalyzer({
 // 绑定 Canvas 渲染器
 const canvas = document.getElementById("visualizer") as HTMLCanvasElement;
 const renderer = new AlwaveCanvasRenderer(canvas, { bandCount: 6 });
+// 可选：使用封面图片作为胶囊模糊背景
+// renderer.setArtwork(coverImage);
 
 const pcmBuffer = new Float32Array(2048);
 
@@ -132,11 +134,13 @@ requestAnimationFrame(render);
 |---|---|---|---|
 | `bandCount` | `Int` / `number` | `6` | 频段数量（支持 6–36） |
 | `sampleRate` | `Double` / `number` | `48000` | 输入 PCM 采样率（Hz） |
+| `inputGain` | `Double` / `number` | `1.0` | 分析前输入增益倍率 |
 | `reactivity` | `Double` / `number` | `1.0` | 瞬态起音加成倍率 |
 | `noiseGateScale` | `Double` / `number` | `1.0` | 噪声门限敏感度系数 |
 | `capsuleWidth` | `CGFloat` / `number` | `4.0` | 胶囊基础宽度（点或像素） |
 | `capsuleSpacing` | `CGFloat` / `number` | `3.0` | 相邻胶囊间距 |
 | `barColor` / `color` | `Color` / `string` | `.white` / `"#E6C450"` | 胶囊填充颜色 |
+| `artwork` | `CanvasImageSource | null` | `null` | 模糊专辑封面裁剪蒙版（Web Canvas） |
 | `springDuration` | `Double` / `number` | `0.325` | 弹簧特征收敛时长（秒） |
 | `springDamping` | `Double` / `number` | `0.83` | 阻尼比 $\zeta$（约 0.9% 过冲） |
 

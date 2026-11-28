@@ -124,6 +124,36 @@ final class SpectrumCoreTests: XCTestCase {
         XCTAssertEqual(SpectrumAnalyzer.recommendedBandCount(width: 252), 9)
     }
 
+    func testInputGain() {
+        let sampleRate = 48000.0
+        let freq = 1000.0
+        var pcm = [Float](repeating: 0.0, count: 2048)
+        for i in 0..<2048 {
+            pcm[i] = Float(sin(2.0 * Double.pi * freq * Double(i) / sampleRate)) * 0.02
+        }
+
+        // 1. inputGain = 1.0 (baseline)
+        let analyzer1 = SpectrumAnalyzer(bandCount: 6, sampleRate: sampleRate, inputGain: 1.0)
+        analyzer1.pushSamples(pcm)
+        let out1 = analyzer1.step(dt: 1.0 / 60.0)
+
+        // 2. inputGain = 0.0 (zeros)
+        let analyzer0 = SpectrumAnalyzer(bandCount: 6, sampleRate: sampleRate, inputGain: 0.0)
+        analyzer0.pushSamples(pcm)
+        let out0 = analyzer0.step(dt: 1.0 / 60.0)
+        for val in out0 {
+            XCTAssertEqual(val, 0.0, accuracy: 1e-6)
+        }
+
+        // 3. inputGain = 2.0 (boosts quiet signal)
+        let analyzer2 = SpectrumAnalyzer(bandCount: 6, sampleRate: sampleRate, inputGain: 2.0)
+        analyzer2.pushSamples(pcm)
+        let out2 = analyzer2.step(dt: 1.0 / 60.0)
+
+        XCTAssertGreaterThan(out1[3], 0.0)
+        XCTAssertGreaterThan(out2[3], out1[3])
+    }
+
     struct GoldenVectorStep: Codable {
         let stepIndex: Int
         let pcm: [Float]

@@ -21,6 +21,12 @@ public final class SpectrumAnalyzer: @unchecked Sendable {
         }
     }
 
+    public var inputGain: Double {
+        didSet {
+            inputGain = max(0.0, inputGain)
+        }
+    }
+
     public var tuningProfile: TuningProfile {
         didSet {
             chain.updateProfile(tuningProfile)
@@ -38,7 +44,8 @@ public final class SpectrumAnalyzer: @unchecked Sendable {
         sampleRate: Double = 48000.0,
         tuningProfile: TuningProfile = .default,
         reactivity: Double = 1.0,
-        noiseGateScale: Double = 1.0
+        noiseGateScale: Double = 1.0,
+        inputGain: Double = 1.0
     ) {
         let count = max(1, bandCount)
         self.bandCount = count
@@ -46,6 +53,7 @@ public final class SpectrumAnalyzer: @unchecked Sendable {
         self.tuningProfile = tuningProfile
         self.reactivity = max(0.0, reactivity)
         self.noiseGateScale = max(0.0, noiseGateScale)
+        self.inputGain = max(0.0, inputGain)
 
         self.circularBuffer = CircularBuffer(capacity: 2048)
         guard let fftInstance = RealFFT(fftSize: 2048) else {
@@ -134,6 +142,13 @@ public final class SpectrumAnalyzer: @unchecked Sendable {
                 } else {
                     acc[i] = rows[i] * weights[i] / scale * tuningProfile.subBandTrim
                 }
+            }
+        }
+
+        if inputGain != 1.0 {
+            let g = max(0.0, inputGain)
+            for i in 0..<acc.count {
+                acc[i] *= g
             }
         }
 

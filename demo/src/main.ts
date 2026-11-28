@@ -15,6 +15,7 @@ type AudioSourceType = "preset" | "file" | "mic";
 let currentSource: AudioSourceType = "preset";
 let bandCount = 6;
 let autoWidth = false;
+let inputGain = 1.0;
 let reactivity = 1.0;
 let noiseGateScale = 1.0;
 let springDuration = 0.325;
@@ -27,6 +28,10 @@ let localFileUrl: string | null = null;
 let isAudioLoading = false;
 let isPendingPlay = false;
 let hasLoadError = false;
+let defaultCoverImg: HTMLImageElement | null = null;
+let uploadedCoverImg: HTMLImageElement | null = null;
+let activeCoverImg: HTMLImageElement | null = null;
+let useArtwork = true; // 默认使用封面渐变
 
 // 音频链路引用
 let audioCtx: AudioContext | null = null;
@@ -41,6 +46,7 @@ let rendererTuned: AlwaveCanvasRenderer | null = null;
 
 // 资源基地址
 const demoTrackUrl = `${import.meta.env.BASE_URL}demo-track.m4a`;
+const demoCoverUrl = `${import.meta.env.BASE_URL}demo-cover.jpg`;
 
 // DOM 元素引用
 const audioElement = document.getElementById("audio-element") as HTMLAudioElement;
@@ -93,6 +99,8 @@ const bandCountVal = document.getElementById("band-count-val") as HTMLElement;
 const btnAutoWidth = document.getElementById("btn-auto-width") as HTMLButtonElement;
 const btnTestCollapse = document.getElementById("btn-test-collapse") as HTMLButtonElement;
 const btnResetKnobs = document.getElementById("btn-reset-knobs") as HTMLButtonElement;
+const sliderInputGain = document.getElementById("slider-input-gain") as HTMLInputElement;
+const inputGainVal = document.getElementById("input-gain-val") as HTMLElement;
 const sliderReactivity = document.getElementById("slider-reactivity") as HTMLInputElement;
 const reactivityVal = document.getElementById("reactivity-val") as HTMLElement;
 const sliderNoiseGate = document.getElementById("slider-noisegate") as HTMLInputElement;
@@ -101,6 +109,7 @@ const sliderSpringDuration = document.getElementById("slider-spring-duration") a
 const springDurationVal = document.getElementById("spring-duration-val") as HTMLElement;
 const sliderSpringDamping = document.getElementById("slider-spring-damping") as HTMLInputElement;
 const springDampingVal = document.getElementById("spring-damping-val") as HTMLElement;
+const swatchArtwork = document.getElementById("swatch-artwork") as HTMLButtonElement;
 const colorSwatches = document.querySelectorAll(".color-swatch");
 
 // 主题切换
@@ -143,6 +152,7 @@ function ensureAudioPipeline(): WebAudioBridge {
       tuningProfile: DEFAULT_TUNING_PROFILE,
       reactivity,
       noiseGateScale,
+      inputGain,
     });
   }
 
@@ -172,6 +182,7 @@ function initAnalyzerAndRenderer() {
     tuningProfile: DEFAULT_TUNING_PROFILE,
     reactivity,
     noiseGateScale,
+    inputGain,
   });
 
   const h = canvasTuned.clientHeight || 144;
@@ -222,6 +233,7 @@ function applyAutoWidth() {
         tuningProfile: DEFAULT_TUNING_PROFILE,
         reactivity,
         noiseGateScale,
+        inputGain,
       });
     }
     if (rendererTuned) {
@@ -462,12 +474,30 @@ function setupEventListeners() {
 
       currentSource = type;
       if (type === "preset") {
+        activeCoverImg = defaultCoverImg;
+        if (useArtwork && rendererTuned) {
+          rendererTuned.setArtwork(defaultCoverImg);
+        }
         if (audioElement.src !== demoTrackUrl) {
           audioElement.src = demoTrackUrl;
         }
       } else if (type === "file") {
+        activeCoverImg = uploadedCoverImg;
+        if (useArtwork && rendererTuned) {
+          if (uploadedCoverImg) {
+            rendererTuned.setArtwork(uploadedCoverImg);
+          } else {
+            rendererTuned.setArtwork(null);
+            rendererTuned.setColor(capsuleColor);
+          }
+        }
         if (localFileUrl && audioElement.src !== localFileUrl) {
           audioElement.src = localFileUrl;
+        }
+      } else if (type === "mic") {
+        if (useArtwork && rendererTuned) {
+          rendererTuned.setArtwork(null);
+          rendererTuned.setColor(capsuleColor);
         }
       }
     });
@@ -617,6 +647,23 @@ function setupEventListeners() {
     }
     dropzone.style.display = "none";
     updatePlaybackUI();
+
+    // 异步尝试解析内嵌封面（MP4/M4A/MP3）
+    extractEmbeddedCover(file).then((coverImg) => {
+      uploadedCoverImg = coverImg;
+      if (currentSource === "file") {
+        activeCoverImg = coverImg;
+        if (useArtwork && rendererTuned) {
+          if (coverImg) {
+            rendererTuned.setArtwork(coverImg);
+          } else {
+            rendererTuned.setArtwork(null);
+            rendererTuned.setColor(capsuleColor);
+          }
+        }
+      }
+    });
+
     audioElement.play().then(() => {
       isPendingPlay = false;
       hasLoadError = false;
@@ -655,6 +702,7 @@ function setupEventListeners() {
         tuningProfile: DEFAULT_TUNING_PROFILE,
         reactivity,
         noiseGateScale,
+        inputGain,
       });
     }
     if (rendererTuned) {
@@ -680,6 +728,7 @@ function setupEventListeners() {
 
   // 恢复默认参数
   btnResetKnobs.addEventListener("click", () => {
+    inputGain = 1.0;
     reactivity = 1.0;
     noiseGateScale = 1.0;
     springDuration = 0.325;
@@ -687,6 +736,8 @@ function setupEventListeners() {
     pauseDuration = 0.60;
     pauseDamping = 1.0;
 
+    sliderInputGain.value = "1.00";
+    inputGainVal.textContent = "1.00x";
     sliderReactivity.value = "1.0";
     reactivityVal.textContent = "1.00x";
     sliderNoiseGate.value = "1.0";
@@ -696,11 +747,17 @@ function setupEventListeners() {
     sliderSpringDamping.value = "0.83";
     springDampingVal.textContent = "0.83";
 
+    useArtwork = true;
+    swatchArtwork.classList.add("active");
+    colorSwatches.forEach((s) => s.classList.remove("active"));
+
     if (analyzer) {
+      analyzer.inputGain = inputGain;
       analyzer.reactivity = reactivity;
       analyzer.noiseGateScale = noiseGateScale;
     }
     if (rendererTuned) {
+      rendererTuned.setArtwork(activeCoverImg);
       rendererTuned.setSpringParameters(springDuration, springDamping);
       rendererTuned.setPauseParameters(pauseDuration, pauseDamping);
       rendererTuned.reset();
@@ -708,6 +765,14 @@ function setupEventListeners() {
   });
 
   // 动态旋钮调节
+  sliderInputGain.addEventListener("input", () => {
+    inputGain = parseFloat(sliderInputGain.value);
+    inputGainVal.textContent = `${inputGain.toFixed(2)}x`;
+    if (analyzer) {
+      analyzer.inputGain = inputGain;
+    }
+  });
+
   sliderReactivity.addEventListener("input", () => {
     reactivity = parseFloat(sliderReactivity.value);
     reactivityVal.textContent = `${reactivity.toFixed(2)}x`;
@@ -740,14 +805,26 @@ function setupEventListeners() {
     }
   });
 
-  // 配色切换
+  // 配色与封面切换
+  swatchArtwork.addEventListener("click", () => {
+    useArtwork = true;
+    swatchArtwork.classList.add("active");
+    colorSwatches.forEach((s) => s.classList.remove("active"));
+    if (rendererTuned) {
+      rendererTuned.setArtwork(activeCoverImg);
+    }
+  });
+
   colorSwatches.forEach((swatch) => {
     swatch.addEventListener("click", () => {
+      useArtwork = false;
+      swatchArtwork.classList.remove("active");
       colorSwatches.forEach((s) => s.classList.remove("active"));
       swatch.classList.add("active");
       const color = swatch.getAttribute("data-color");
       if (color && rendererTuned) {
         capsuleColor = color;
+        rendererTuned.setArtwork(null);
         rendererTuned.setColor(color);
         document.documentElement.style.setProperty("--capsule-color", color);
       }
@@ -783,6 +860,106 @@ function setupEventListeners() {
   });
 }
 
+// --- 封面加载与内嵌封面解析 ---
+
+function loadDefaultCover() {
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.onload = () => {
+    defaultCoverImg = img;
+    if (currentSource === "preset") {
+      activeCoverImg = img;
+      if (useArtwork && rendererTuned) {
+        rendererTuned.setArtwork(img);
+      }
+    }
+  };
+  img.src = demoCoverUrl;
+}
+
+async function extractEmbeddedCover(file: File): Promise<HTMLImageElement | null> {
+  try {
+    const sliceSize = Math.min(file.size, 16 * 1024 * 1024);
+    const buffer = await file.slice(0, sliceSize).arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+
+    let imgBlob: Blob | null = null;
+
+    // 1. 检查 MP3 ID3v2 "APIC" 帧
+    if (bytes.length >= 10 && bytes[0] === 0x49 && bytes[1] === 0x44 && bytes[2] === 0x33) {
+      for (let i = 10; i < bytes.length - 16; i++) {
+        if (bytes[i] === 0x41 && bytes[i + 1] === 0x50 && bytes[i + 2] === 0x49 && bytes[i + 3] === 0x43) {
+          const searchLimit = Math.min(bytes.length, i + 512);
+          for (let j = i + 10; j < searchLimit; j++) {
+            // JPEG: 0xFF 0xD8 0xFF
+            if (bytes[j] === 0xff && bytes[j + 1] === 0xd8 && bytes[j + 2] === 0xff) {
+              let end = j + 3;
+              for (let k = j + 3; k < bytes.length - 1; k++) {
+                if (bytes[k] === 0xff && bytes[k + 1] === 0xd9) {
+                  end = k + 2;
+                  break;
+                }
+              }
+              imgBlob = new Blob([bytes.subarray(j, end)], { type: "image/jpeg" });
+              break;
+            }
+            // PNG: 0x89 0x50 0x4E 0x47
+            if (bytes[j] === 0x89 && bytes[j + 1] === 0x50 && bytes[j + 2] === 0x4e && bytes[j + 3] === 0x47) {
+              let end = j + 4;
+              for (let k = j + 4; k < bytes.length - 8; k++) {
+                if (bytes[k] === 0x49 && bytes[k + 1] === 0x45 && bytes[k + 2] === 0x4e && bytes[k + 3] === 0x44) {
+                  end = k + 8;
+                  break;
+                }
+              }
+              imgBlob = new Blob([bytes.subarray(j, end)], { type: "image/png" });
+              break;
+            }
+          }
+          if (imgBlob) break;
+        }
+      }
+    }
+
+    // 2. 检查 MP4/M4A 'covr' 元数据原子
+    if (!imgBlob) {
+      for (let i = 0; i < bytes.length - 16; i++) {
+        if (bytes[i] === 0x63 && bytes[i + 1] === 0x6f && bytes[i + 2] === 0x76 && bytes[i + 3] === 0x72) {
+          for (let j = i + 4; j < Math.min(bytes.length - 16, i + 64); j++) {
+            if (bytes[j] === 0x64 && bytes[j + 1] === 0x61 && bytes[j + 2] === 0x74 && bytes[j + 3] === 0x61) {
+              const imgStart = j + 12;
+              const dataBoxSize = (bytes[j - 4] << 24) | (bytes[j - 3] << 16) | (bytes[j - 2] << 8) | bytes[j - 1];
+              const imgEnd = dataBoxSize > 16 ? j - 4 + dataBoxSize : bytes.length;
+              const isPng = bytes[imgStart] === 0x89 && bytes[imgStart + 1] === 0x50;
+              imgBlob = new Blob([bytes.subarray(imgStart, Math.min(bytes.length, imgEnd))], {
+                type: isPng ? "image/png" : "image/jpeg",
+              });
+              break;
+            }
+          }
+          if (imgBlob) break;
+        }
+      }
+    }
+
+    if (imgBlob && imgBlob.size > 100) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        const url = URL.createObjectURL(imgBlob!);
+        img.onload = () => resolve(img);
+        img.onerror = () => {
+          URL.revokeObjectURL(url);
+          resolve(null);
+        };
+        img.src = url;
+      });
+    }
+  } catch (err) {
+    console.warn("未能解析内嵌封面:", err);
+  }
+  return null;
+}
+
 // --- 入口初始化 ---
 
 function main() {
@@ -792,6 +969,7 @@ function main() {
   setupEventListeners();
   updateVisualizerLayout();
   updatePlaybackUI();
+  loadDefaultCover();
   requestAnimationFrame(animationLoop);
 }
 

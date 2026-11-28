@@ -110,6 +110,8 @@ const analyzer = createSpectrumAnalyzer({
 // Attach Canvas renderer
 const canvas = document.getElementById("visualizer") as HTMLCanvasElement;
 const renderer = new AlwaveCanvasRenderer(canvas, { bandCount: 6 });
+// Optional: use cover art as blurred capsule fill
+// renderer.setArtwork(coverImage);
 
 const pcmBuffer = new Float32Array(2048);
 
@@ -132,11 +134,13 @@ requestAnimationFrame(render);
 |---|---|---|---|
 | `bandCount` | `Int` / `number` | `6` | Number of frequency bands (6–36) |
 | `sampleRate` | `Double` / `number` | `48000` | Input PCM sample rate in Hz |
+| `inputGain` | `Double` / `number` | `1.0` | Pre-analysis input gain multiplier |
 | `reactivity` | `Double` / `number` | `1.0` | Attack boost multiplier for transients |
 | `noiseGateScale` | `Double` / `number` | `1.0` | Noise gate threshold scaling |
 | `capsuleWidth` | `CGFloat` / `number` | `4.0` | Default capsule width in points or pixels |
 | `capsuleSpacing` | `CGFloat` / `number` | `3.0` | Spacing between adjacent capsules |
 | `barColor` / `color` | `Color` / `string` | `.white` / `"#E6C450"` | Fill color of the capsules |
+| `artwork` | `CanvasImageSource | null` | `null` | Blurred album artwork clipping mask (Web Canvas) |
 | `springDuration` | `Double` / `number` | `0.325` | Characteristic settling duration in seconds |
 | `springDamping` | `Double` / `number` | `0.83` | Damping ratio $\zeta$ (~0.9% overshoot) |
 

@@ -84,3 +84,60 @@ describe("AlwaveCanvasRenderer exports", () => {
     expect(AlwaveCanvasRenderer).toBeDefined();
   });
 });
+
+describe("AlwaveCanvasRenderer artwork & rendering", () => {
+  it("supports setArtwork(null) and rendering with/without artwork", () => {
+    const mockContext: any = {
+      save: () => {},
+      restore: () => {},
+      scale: () => {},
+      clearRect: () => {},
+      beginPath: () => {},
+      clip: () => {},
+      roundRect: () => {},
+      fill: () => {},
+      drawImage: () => {},
+      fillStyle: "",
+    };
+
+    let fillCalled = false;
+    let clipCalled = false;
+    let drawImageCalled = false;
+    mockContext.fill = () => { fillCalled = true; };
+    mockContext.clip = () => { clipCalled = true; };
+    mockContext.drawImage = () => { drawImageCalled = true; };
+
+    const mockCanvas: any = {
+      getContext: () => mockContext,
+      clientWidth: 300,
+      clientHeight: 150,
+      width: 300,
+      height: 150,
+    };
+
+    const renderer = new AlwaveCanvasRenderer(mockCanvas);
+    expect(renderer.artworkCanvas).toBeNull();
+
+    // Render with solid color
+    renderer.render([0.5, 0.5, 0.5, 0.5, 0.5, 0.5], 1 / 60);
+    expect(fillCalled).toBe(true);
+    expect(clipCalled).toBe(false);
+
+    // setArtwork(null)
+    renderer.setArtwork(null);
+    expect(renderer.artworkCanvas).toBeNull();
+
+    // Mock artwork canvas
+    const mockArtworkCanvas: any = { width: 96, height: 96 };
+    renderer.artworkCanvas = mockArtworkCanvas;
+
+    // Render with artwork canvas
+    renderer.render([0.5, 0.5, 0.5, 0.5, 0.5, 0.5], 1 / 60);
+    expect(clipCalled).toBe(true);
+    expect(drawImageCalled).toBe(true);
+
+    // Clear artwork
+    renderer.setArtwork(null);
+    expect(renderer.artworkCanvas).toBeNull();
+  });
+});
